@@ -1,0 +1,46 @@
+/* ===== IFATOSS DESIGN SYSTEM ===== */
+
+:root {
+  /* Primary Colors */
+  --primary: #1A3C5E;
+  --primary-light: #2A5A8E;
+  --primary-dark: #0F2340;
+
+  /* Accent */
+  --accent: #E8A020;
+  --accent-light: #F5B940;
+
+  /* Neutrals */
+  --white: #FFFFFF;
+  --gray-100: #F5F6FA;
+  --gray-200: #E8EAF0;
+  --gray-400: #9AA0B0;
+  --gray-700: #4A5060;
+  --black: #1A1D26;
+
+  /* Status Colors */
+  --success: #22C55E;
+  --error: #EF4444;
+  --warning: #F59E0B;
+
+  /* Font */
+  --font-main: 'Inter', sans-serif;
+
+  /* Spacing */
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--gray-100);
+  color: var(--black);
+}

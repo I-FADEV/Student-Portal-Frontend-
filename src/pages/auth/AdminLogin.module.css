@@ -1,0 +1,217 @@
+/* ===== ADMIN LOGIN PAGE ===== */
+
+.container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+}
+
+/* ===== LEFT SIDE ===== */
+.leftSide {
+  flex: 1;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 40px;
+  gap: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.leftSide::before {
+  content: '';
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.03);
+  top: -100px;
+  left: -100px;
+}
+
+.leftSide::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  bottom: -80px;
+  right: -80px;
+}
+
+.logoArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 50%;
+  mix-blend-mode: lighten;
+}
+
+.schoolName {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: 4px;
+}
+
+.schoolSub {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.7);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.tagline {
+  font-size: 22px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.85);
+  text-align: center;
+  line-height: 1.7;
+}
+
+/* ===== RIGHT SIDE ===== */
+.rightSide {
+  flex: 1;
+  background: var(--gray-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ===== ADMIN BADGE ===== */
+.adminBadge {
+  display: inline-block;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.welcomeText {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--black);
+  margin-bottom: 8px;
+}
+
+.subText {
+  font-size: 14px;
+  color: var(--gray-400);
+  margin-bottom: 36px;
+}
+
+/* ===== FORM ===== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inputGroup label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.inputGroup input {
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-family: var(--font-main);
+  color: var(--black);
+  background: var(--gray-100);
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.inputGroup input:focus {
+  border-color: var(--error);
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.08);
+}
+
+.loginBtn {
+  margin-top: 8px;
+  padding: 15px;
+  background: linear-gradient(135deg, #1a1a2e, #0f3460);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  font-family: var(--font-main);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(15, 52, 96, 0.3);
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 52, 96, 0.4);
+}
+
+.loginBtn:active {
+  transform: translateY(0px);
+}
+
+.loginBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== BACK LINK ===== */
+.backLink {
+  margin-top: 24px;
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.backLink a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.backLink a:hover {
+  color: var(--primary);
+}

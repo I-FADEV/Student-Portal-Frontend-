@@ -30,11 +30,9 @@ const departments = [
 function Login() {
   const [isRegister, setIsRegister] = useState(false)
 
-  // Login fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
-  // Register fields
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
   const [regEmail, setRegEmail] = useState('')
@@ -70,7 +68,6 @@ function Login() {
     setSuccess('')
 
     try {
-      // Will connect to backend later
       console.log({ fullName, phone, regEmail, department })
       setSuccess('Registration successful! Your matric number will be sent to your email once generated.')
       setLoading(false)

@@ -18,13 +18,10 @@ function AdminLogin() {
     setError('')
 
     try {
-      // Temporary fake login — will connect to backend later
       const fakeToken = 'admin-token-123'
       const fakeUser = { name, role: 'ga' }
-
       login(fakeUser, fakeToken)
       navigate('/admin/ga')
-
     } catch {
       setError('Invalid name or password')
       setLoading(false)

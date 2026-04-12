@@ -32,6 +32,7 @@ function Login() {
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [MatricNo, setMatricNo] = useState('')
 
   const [fullName, setFullName] = useState('')
   const [phone, setPhone] = useState('')
@@ -138,6 +139,17 @@ function Login() {
               />
             </div>
 
+            <div className={styles.inputGroup}>
+              <label>Matric Number</label>
+              <input
+                type="text"
+                placeholder="Enter your matric number"
+                value={MatricNo}
+                onChange={(e) => setMatricNo(e.target.value)}
+                required
+              />
+            </div>
+
             {error && <p className={styles.errorMsg}>{error}</p>}
 
             <button type="submit" className={styles.loginBtn} disabled={loading}>
@@ -165,7 +177,7 @@ function Login() {
 
           <form onSubmit={handleRegister} className={styles.form}>
             <div className={styles.inputGroup}>
-              <label>Full Name</label>
+              <label>Username</label>
               <input
                 type="text"
                 placeholder="Enter your full name"

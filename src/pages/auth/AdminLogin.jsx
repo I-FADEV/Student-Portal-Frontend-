@@ -55,7 +55,7 @@ function AdminLogin() {
           <form onSubmit={handleSubmit} className={styles.form}>
 
             <div className={styles.inputGroup}>
-              <label>Full Name</label>
+              <label>Username</label>
               <input
                 type="text"
                 placeholder="Enter your name"

@@ -60,11 +60,11 @@ export default function App() {
       <Route
         path="/student/courses"
         element={
-          <ProtectedRoute allowedRoles={['student']}>
+          
             <StudentLayout>
               <Courses />
             </StudentLayout>
-          </ProtectedRoute>
+          
         }
       />
       <Route

@@ -1,6 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Login from './pages/auth/Login'
-import AdminLogin from './pages/auth/AdminLogin'
+
 import ProtectedRoute from './routes/ProtectedRoute'
 import StudentLayout from './components/shared/StudentLayout'
 import Dashboard from './pages/student/Dashboard'
@@ -10,95 +10,117 @@ import Courses from './pages/student/Courses'
 import Finance from './pages/student/Finance'
 import IDCard from './pages/student/IDCard'
 
-function App() {
+import AdminLogin from './pages/auth/AdminLogin'
+import AdminProtectedRoute from './routes/AdminProtectedRoute'
+
+// Import the actual dashboard components
+import GADashboard from "./pages/admin/ga/Dashboard";
+import TACDashboard from "./pages/admin/tac/Dashboard";
+import BursarDashboard from "./pages/admin/bursar/Dashboard";
+import TimetableDashboard from "./pages/admin/timetable/Dashboard";
+
+export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+    <Routes>
+      {/* Public routes */}
+      <Route path="/" element={<Login />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* Student Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <Dashboard />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-        />
+      {/* Student routes – unchanged */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <Dashboard />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/profile"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <Profile />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/timetable"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <Timetable />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/courses"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <Courses />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/finance"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <Finance />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/idcard"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout>
+              <IDCard />
+            </StudentLayout>
+          </ProtectedRoute>
+        }
+      />
 
-        <Route
-          path="/student/profile"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <Profile />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/student/timetable"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <Timetable />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/student/courses"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <Courses />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/student/finance"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <Finance />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-         />
-
-        <Route
-          path="/student/idcard"
-          element={
-            <ProtectedRoute allowedRoles={['student']}>
-              <StudentLayout>
-                <IDCard />
-              </StudentLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Admin GA Route */}
-        <Route
-          path="/admin/ga"
-          element={
-            <ProtectedRoute allowedRoles={['ga']}>
-              <div style={{ padding: '40px', fontFamily: 'Inter, sans-serif' }}>
-                <h1>Welcome to GA Dashboard! ✅</h1>
-                <p>Admin login is working correctly.</p>
-              </div>
-            </ProtectedRoute>
-          }
-        />
-
-      </Routes>
-    </BrowserRouter>
+      {/* ========== ADMIN ROUTES (fixed) ========== */}
+      <Route
+        path="/admin/ga"
+        element={
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <GADashboard />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/tac"
+        element={
+          <AdminProtectedRoute allowedRoles={['tac']}>
+            <TACDashboard />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/bursar"
+        element={
+          <AdminProtectedRoute allowedRoles={['bursar']}>
+            <BursarDashboard />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <TimetableDashboard />
+          </AdminProtectedRoute>
+        }
+      />
+    </Routes>
   )
 }
-
-export default App

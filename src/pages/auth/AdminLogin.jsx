@@ -1,67 +1,92 @@
-import styles from './AdminLogin.module.css'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAdminAuth } from "../../context/AdminAuthContext";
+import styles from "./AdminLogin.module.css";
 
-function AdminLogin() {
-  const [name, setName] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+export default function AdminLogin() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const { login } = useAdminAuth();
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     try {
-      const fakeToken = 'admin-token-123'
-      const fakeUser = { name, role: 'ga' }
-      login(fakeUser, fakeToken)
-      navigate('/admin/ga')
-    } catch {
-      setError('Invalid name or password')
-      setLoading(false)
+      // 🔁 REPLACE THIS URL WITH YOUR ACTUAL BACKEND ENDPOINT
+      const response = await fetch("https://your-backend.com/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
+
+      // Assuming your backend returns:
+      // { role, route, title, token, ... }
+      // Adjust property names to match your actual response
+      const { role, route, title, token } = data;
+
+      login(
+        {
+          username: username.trim(),
+          role: role,
+          title: title,
+        },
+        token
+      );
+
+      navigate(route);
+    } catch (err) {
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className={styles.container}>
-
-      {/* Left Side */}
       <div className={styles.leftSide}>
         <div className={styles.logoArea}>
-          <img src="/logo.png" alt="Ifatoss Logo" className={styles.logo} />
+          <img src="/logo.png" alt="School Logo" className={styles.logo} />
           <h1 className={styles.schoolName}>IFATOSS</h1>
-          <p className={styles.schoolSub}>Admin Portal</p>
+          <p className={styles.schoolSub}>Student Portal</p>
         </div>
         <p className={styles.tagline}>
-          Manage your institution, <br />
-          efficiently and securely.
+          Empowering education through<br />
+          seamless administration.
         </p>
       </div>
 
-      {/* Right Side */}
       <div className={styles.rightSide}>
         <div className={styles.card}>
-
           <div className={styles.adminBadge}>Admin Access</div>
           <h2 className={styles.welcomeText}>Welcome Back</h2>
-          <p className={styles.subText}>Sign in to your admin account</p>
+          <p className={styles.subText}>Sign in to manage your domain</p>
 
           <form onSubmit={handleSubmit} className={styles.form}>
-
             <div className={styles.inputGroup}>
               <label>Username</label>
               <input
                 type="text"
-                placeholder="Enter your name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="ga / tac / bursar / timetable"
               />
             </div>
 
@@ -69,34 +94,24 @@ function AdminLogin() {
               <label>Password</label>
               <input
                 type="password"
-                placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                placeholder="Enter your password"
               />
             </div>
 
-            {error && <p className={styles.errorMsg}>{error}</p>}
+            {error && <div className={styles.errorMsg}>{error}</div>}
 
-            <button
-              type="submit"
-              className={styles.loginBtn}
-              disabled={loading}
-            >
-              {loading ? 'Signing in...' : 'Sign In'}
+            <button type="submit" disabled={loading} className={styles.loginBtn}>
+              {loading ? "Signing in..." : "Sign In"}
             </button>
 
+            <div className={styles.backLink}>
+              <Link to="/">← Back to Student Login</Link>
+            </div>
           </form>
-
-          <div className={styles.backLink}>
-            <a href="/">← Back to Student Login</a>
-          </div>
-
         </div>
       </div>
-
     </div>
-  )
+  );
 }
-
-export default AdminLogin

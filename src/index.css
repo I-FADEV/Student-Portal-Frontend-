@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* your custom CSS variables and body styles remain below */
+
 /* ===== IFATOSS DESIGN SYSTEM ===== */
 :root {
   --primary: #1A3C5E;

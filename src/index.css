@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* your custom CSS variables and body styles remain below */
+
+/* ===== IFATOSS DESIGN SYSTEM ===== */
+:root {
+  --primary: #1A3C5E;
+  --primary-light: #2A5A8E;
+  --primary-dark: #0F2340;
+  --accent: #E8A020;
+  --accent-light: #F5B940;
+  --white: #FFFFFF;
+  --gray-100: #F5F6FA;
+  --gray-200: #E8EAF0;
+  --gray-400: #9AA0B0;
+  --gray-700: #4A5060;
+  --black: #1A1D26;
+  --success: #22C55E;
+  --error: #EF4444;
+  --warning: #F59E0B;
+  --font-main: 'Inter', sans-serif;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.15);
+}
+
+body {
+  font-family: var(--font-main);
+}

@@ -27,7 +27,7 @@ function Timetable() {
           </p>
         </div>
         <button className="flex items-center gap-2 bg-[#1A3C5E] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#2A5A8E] transition-all">
-          ⬇️ Download PDF
+           Download PDF
         </button>
       </div>
 
@@ -38,7 +38,7 @@ function Timetable() {
           <p className="text-lg font-bold">2025/2026 Academic Session</p>
           <p className="text-sm text-blue-200 mt-0.5">Second Semester</p>
         </div>
-        <span className="text-4xl">📅</span>
+        <span className="text-4xl"></span>
       </div>
 
       {/* Timetable */}
@@ -142,7 +142,7 @@ function Timetable() {
           </div>
 
           <div className="text-center py-8 border-t border-gray-100">
-            <p className="text-3xl mb-2">📅</p>
+            <p className="text-3xl mb-2"></p>
             <p className="text-sm font-semibold text-gray-500">Timetable not published yet</p>
             <p className="text-xs text-gray-400 mt-1">Your timetable will appear here once published by your admin</p>
           </div>

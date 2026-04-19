@@ -4,12 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 const navItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: '🏠' },
-  { label: 'Profile', path: '/student/profile', icon: '👤' },
-  { label: 'Timetable', path: '/student/timetable', icon: '📅' },
-  { label: 'Courses', path: '/student/courses', icon: '📚' },
-  { label: 'Finance', path: '/student/finance', icon: '💰' },
-  { label: 'ID Card', path: '/student/idcard', icon: '🪪' },
+  { label: 'Dashboard', path: '/dashboard' },
+  { label: 'Profile', path: '/student/profile' },
+  { label: 'Timetable', path: '/student/timetable' },
+  { label: 'Courses', path: '/student/courses' },
+  { label: 'Finance', path: '/student/finance' },
+  { label: 'ID Card', path: '/student/idcard' },
 ]
 
 function StudentLayout({ children }) {

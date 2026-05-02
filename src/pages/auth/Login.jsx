@@ -53,13 +53,14 @@ function Login() {
           <p className={styles.subText}>Sign in to your account</p>
 
           <form onSubmit={handleLogin} className={styles.form}>
+
             <div className={styles.inputGroup}>
-              <label>Username</label>
+              <label>Matric Number</label>
               <input
                 type="text"
-                placeholder="Enter your username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="Enter your matric number"
+                value={matricNo}
+                onChange={(e) => setMatricNo(e.target.value)}
                 required
               />
             </div>
@@ -71,17 +72,6 @@ function Login() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className={styles.inputGroup}>
-              <label>Matric Number</label>
-              <input
-                type="text"
-                placeholder="Enter your matric number"
-                value={matricNo}
-                onChange={(e) => setMatricNo(e.target.value)}
                 required
               />
             </div>

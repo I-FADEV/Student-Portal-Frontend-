@@ -19,7 +19,7 @@ export default function AdminLogin() {
 
     try {
       // 🔁 REPLACE THIS URL WITH YOUR ACTUAL BACKEND ENDPOINT
-      const response = await fetch("https://your-backend.com/api/admin/login", {
+      const response = await fetch("https://student-portal-backend-xa6w.onrender.com/auth/admin/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

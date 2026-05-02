@@ -1,10 +1,10 @@
 // src/services/api.js
 
-const API_BASE_URL = "https://student-portal-backend-x6w.onrender.com";
+const API_BASE_URL = "https://student-portal-backend-xa6w.onrender.com";
 
 // ========== ADMIN ==========
 export async function adminLogin(username, password) {
-  const response = await fetch(`${API_BASE_URL}/api/admin/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/admin/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -22,7 +22,7 @@ export async function adminLogin(username, password) {
 
 // ========== STUDENT ==========
 export async function studentLogin(username, password, matricNo) {
-  const response = await fetch(`${API_BASE_URL}/api/student/login`, {
+  const response = await fetch(`${API_BASE_URL}/auth/student/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password, matricNo }),
@@ -38,7 +38,7 @@ export async function studentLogin(username, password, matricNo) {
 }
 
 export async function studentRegister(fullName, phone, username, department) {
-  const response = await fetch(`${API_BASE_URL}/api/student/register`, {
+  const response = await fetch(`${API_BASE_URL}/auth/student/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ fullName, phone, username, department }),

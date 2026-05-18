@@ -58,9 +58,13 @@ export async function studentLogin(matricNumber, password) {
   });
   const data = await response.json();
   if (!response.ok) throw new Error(getErrorMessage(data, "Login failed"));
+
+  const token = data.token;
+  const payload = decodeJwtPayload(token);
+
   return {
-    user: data.user,
-    token: data.token,
+    user: { userId: payload.userId, role: payload.role },
+    token,
   };
 }
 

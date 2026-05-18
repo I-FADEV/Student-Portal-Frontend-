@@ -20,7 +20,7 @@ function Login() {
     setError('')
 
     try {
-      const { user, token } = await studentLogin(matricNo, password, matricNo)
+      const { user, token } = await studentLogin(matricNo, password)
       login(user, token)
       navigate('/dashboard')
     } catch (err) {

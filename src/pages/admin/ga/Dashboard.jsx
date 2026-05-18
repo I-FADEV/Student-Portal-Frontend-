@@ -2,11 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { useAdminAuth } from "../../../context/AdminAuthContext";
 
 export default function Dashboard() {
-  const { adminUser, logoutAdmin } = useAdminAuth();
+  const { adminUser, logout } = useAdminAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logoutAdmin();
+    logout();
     navigate("/admin/login");
   };
 

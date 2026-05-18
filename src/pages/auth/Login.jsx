@@ -5,8 +5,6 @@ import { useAuth } from '../../context/AuthContext'
 import { studentLogin } from '../../services/api'
 
 function Login() {
-  // Login form fields only
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [matricNo, setMatricNo] = useState('')
 
@@ -22,11 +20,11 @@ function Login() {
     setError('')
 
     try {
-      const { user, token } = await studentLogin(username, password, matricNo)
+      const { user, token } = await studentLogin(matricNo, password, matricNo)
       login(user, token)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.message || 'Invalid username, password, or matric number')
+      setError(err.message || 'Invalid matric number or password')
     } finally {
       setLoading(false)
     }

@@ -54,7 +54,7 @@ export async function studentLogin(matricNumber, password) {
   const response = await fetch(`${API_BASE_URL}/auth/student/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ matric_number: matricNumber, password }),
+    body: JSON.stringify({ matricNumber, password }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(getErrorMessage(data, "Login failed"));

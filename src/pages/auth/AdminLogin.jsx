@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
+import { adminLogin } from "../../services/api";
 import styles from "./AdminLogin.module.css";
 
 export default function AdminLogin() {
@@ -18,28 +19,7 @@ export default function AdminLogin() {
     setError("");
 
     try {
-      // 🔁 REPLACE THIS URL WITH YOUR ACTUAL BACKEND ENDPOINT
-      const response = await fetch("https://student-portal-backend-xa6w.onrender.com/auth/admin/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: username.trim(),
-          password: password.trim(),
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid credentials");
-      }
-
-      // Assuming your backend returns:
-      // { role, route, title, token, ... }
-      // Adjust property names to match your actual response
-      const { role, route, title, token } = data;
+      const { role, route, title, token } = await adminLogin(username.trim(), password.trim());
 
       login(
         {

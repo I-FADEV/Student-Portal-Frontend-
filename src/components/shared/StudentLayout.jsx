@@ -1,30 +1,32 @@
 import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { 
-  LayoutDashboard, 
-  User, 
-  Calendar, 
-  BookOpen, 
-  Wallet, 
+import {
+  LayoutDashboard,
+  User,
+  Calendar,
+  BookOpen,
+  Wallet,
   CreditCard,
+  TrendingUp,
   LogOut,
   Menu,
   X,
 } from 'lucide-react'
 
 const navItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
-  { label: 'Profile', path: '/student/profile', icon: User },
-  { label: 'Timetable', path: '/student/timetable', icon: Calendar },
-  { label: 'Courses', path: '/student/courses', icon: BookOpen },
-  { label: 'Finance', path: '/student/finance', icon: Wallet },
-  { label: 'ID Card', path: '/student/idcard', icon: CreditCard },
+  { label: 'Dashboard',  path: '/dashboard',         icon: LayoutDashboard },
+  { label: 'Profile',    path: '/student/profile',    icon: User },
+  { label: 'Timetable',  path: '/student/timetable',  icon: Calendar },
+  { label: 'Courses',    path: '/student/courses',    icon: BookOpen },
+  { label: 'Finance',    path: '/student/finance',    icon: Wallet },
+  { label: 'ID Card',    path: '/student/idcard',     icon: CreditCard },
+  { label: 'Results',    path: '/student/results',    icon: TrendingUp },
 ]
 
 function LogoFull({ size = 'md' }) {
-  const imgClass = size === 'sm' ? 'h-8 w-auto' : 'h-10 w-auto'
-  const titleClass = size === 'sm' ? 'text-base' : 'text-lg'
+  const imgClass   = size === 'sm' ? 'h-8 w-auto'  : 'h-10 w-auto'
+  const titleClass = size === 'sm' ? 'text-base'    : 'text-lg'
 
   return (
     <div className="flex items-center gap-3 min-w-0">
@@ -58,13 +60,10 @@ function LogoFull({ size = 'md' }) {
 function StudentLayout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const navigate  = useNavigate()
+  const location  = useLocation()
 
-  const handleLogout = () => {
-    logout()
-    navigate('/')
-  }
+  const handleLogout = () => { logout(); navigate('/') }
 
   const handleNavigation = (path) => {
     navigate(path)
@@ -109,7 +108,7 @@ function StudentLayout({ children }) {
         <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path
-            const Icon = item.icon
+            const Icon     = item.icon
             return (
               <button
                 key={item.path}
@@ -131,9 +130,7 @@ function StudentLayout({ children }) {
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 <span className="truncate">{item.label}</span>
-                {isActive && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />
-                )}
+                {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white" />}
               </button>
             )
           })}

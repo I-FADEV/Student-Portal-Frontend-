@@ -9,31 +9,29 @@ import Timetable from './pages/student/Timetable'
 import Courses from './pages/student/Courses'
 import Finance from './pages/student/Finance'
 import IDCard from './pages/student/IDCard'
+import Results from './pages/student/Results'
 
 import AdminLogin from './pages/auth/AdminLogin'
 import AdminProtectedRoute from './routes/AdminProtectedRoute'
 
-// Import the actual dashboard components
-import GADashboard from "./pages/admin/ga/Dashboard";
-import TACDashboard from "./pages/admin/tac/Dashboard";
-import BursarDashboard from "./pages/admin/bursar/Dashboard";
-import TimetableDashboard from "./pages/admin/timetable/Dashboard";
+import GADashboard       from './pages/admin/ga/Dashboard'
+import TACDashboard      from './pages/admin/tac/Dashboard'
+import BursarDashboard   from './pages/admin/bursar/Dashboard'
+import TimetableDashboard from './pages/admin/timetable/Dashboard'
 
 export default function App() {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={<Login />} />
+      <Route path="/"            element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
 
-      {/* Student routes – unchanged */}
+      {/* ── Student routes ── */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <Dashboard />
-            </StudentLayout>
+            <StudentLayout><Dashboard /></StudentLayout>
           </ProtectedRoute>
         }
       />
@@ -41,9 +39,7 @@ export default function App() {
         path="/student/profile"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <Profile />
-            </StudentLayout>
+            <StudentLayout><Profile /></StudentLayout>
           </ProtectedRoute>
         }
       />
@@ -51,9 +47,7 @@ export default function App() {
         path="/student/timetable"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <Timetable />
-            </StudentLayout>
+            <StudentLayout><Timetable /></StudentLayout>
           </ProtectedRoute>
         }
       />
@@ -61,9 +55,7 @@ export default function App() {
         path="/student/courses"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <Courses />
-            </StudentLayout>
+            <StudentLayout><Courses /></StudentLayout>
           </ProtectedRoute>
         }
       />
@@ -71,9 +63,7 @@ export default function App() {
         path="/student/finance"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <Finance />
-            </StudentLayout>
+            <StudentLayout><Finance /></StudentLayout>
           </ProtectedRoute>
         }
       />
@@ -81,14 +71,20 @@ export default function App() {
         path="/student/idcard"
         element={
           <ProtectedRoute allowedRoles={['student']}>
-            <StudentLayout>
-              <IDCard />
-            </StudentLayout>
+            <StudentLayout><IDCard /></StudentLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/student/results"
+        element={
+          <ProtectedRoute allowedRoles={['student']}>
+            <StudentLayout><Results /></StudentLayout>
           </ProtectedRoute>
         }
       />
 
-      {/* ========== ADMIN ROUTES (fixed) ========== */}
+      {/* ── Admin routes ── */}
       <Route
         path="/admin/ga"
         element={
@@ -122,7 +118,7 @@ export default function App() {
         }
       />
 
-      {/* Catch-all: redirect unknown routes to login */}
+      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -3,9 +3,10 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ADMIN_TYPE_MAP = {
   general_admin:    { role: "ga",        route: "/admin/ga",        title: "General Admin" },
-  finance_admin:    { role: "bursar",    route: "/admin/bursar",    title: "Bursar Admin" },
+  finance_admin:    { role: "bursar",    route: "/admin/nursar",    title: "Finance Admin" },
   timetable_admin:  { role: "timetable", route: "/admin/timetable", title: "Timetable Admin" },
-  idcard_admin:     { role: "tac",       route: "/admin/tac",       title: "TAC Admin" },
+  idcard_admin:     { role: "tac",       route: "/admin/tac",       title: "Idcard Admin" },
+  registry_admin:   { role: 'registry', route: '/admin/registry', title: 'Registry Admin'   },
 };
 
 function getErrorMessage(data, fallback) {
@@ -156,4 +157,400 @@ export function getPhotoURL(filename) {
   // If it's already a full URL (http/https), return as-is
   if (filename.startsWith("http")) return filename;
   return `${API_BASE_URL}/uploads/${filename}`;
+}
+
+// ========== ADMIN MANAGEMENT (GA only) ==========
+
+export async function createAdmin({ username, adminType, password }, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/admin/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ username, adminType, password,confirmPassword: password }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create admin'))
+  return data
+}
+
+export async function getAllAdmins(token) {
+  const response = await fetch(`${API_BASE_URL}/admin/all`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch admins'))
+  return Array.isArray(data)       ? data       :
+         Array.isArray(data.data)   ? data.data   :
+         Array.isArray(data.admins) ? data.admins :
+         []
+}
+
+export async function getActivityLogs(token, { limit } = {}) {
+  const params = limit ? `?limit=${limit}` : ''
+  const response = await fetch(`${API_BASE_URL}/admin/logs${params}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch logs'))
+  return data
+}
+
+export async function deleteAdmin(adminId, token) {
+  const response = await fetch(`${API_BASE_URL}/admin/delete/${adminId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete admin'))
+  return data
+}
+
+// ========== REGISTRY ADMIN ==========
+ 
+export async function getRegistryStats(token) {
+  const response = await fetch(`${API_BASE_URL}/registry/stats`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch registry stats'))
+  return data
+}
+ 
+// ── Faculties ──────────────────────────────────────────────────────────────────
+ 
+export async function getFaculties(token) {
+  const response = await fetch(`${API_BASE_URL}/registry/faculties`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch faculties'))
+  return data
+}
+ 
+export async function createFaculty({ name }, token) {
+  const response = await fetch(`${API_BASE_URL}/registry/faculties`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ name }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create faculty'))
+  return data
+}
+ 
+export async function deleteFaculty(id, token) {
+  const response = await fetch(`${API_BASE_URL}/registry/faculties/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete faculty'))
+  return data
+}
+ 
+// ── Departments ────────────────────────────────────────────────────────────────
+ 
+export async function getDepartments(token) {
+  const response = await fetch(`${API_BASE_URL}/registry/departments`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch departments'))
+  return data
+}
+ 
+export async function createDepartment({ name, facultyId, minLevel, maxLevel }, token) {
+  const response = await fetch(`${API_BASE_URL}/registry/departments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ name, facultyId, minLevel, maxLevel }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create department'))
+  return data
+}
+ 
+export async function updateDepartment(id, { name, facultyId, minLevel, maxLevel }, token) {
+  const response = await fetch(`${API_BASE_URL}/registry/departments/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ name, facultyId, minLevel, maxLevel }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to update department'))
+  return data
+}
+ 
+export async function deleteDepartment(id, token) {
+  const response = await fetch(`${API_BASE_URL}/registry/departments/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete department'))
+  return data
+}
+
+
+// ========== FINANCE — STATS ==========
+// Backend needs: GET /finance/stats (admin only)
+// Returns: { totalStudents, totalFeesCreated, totalCollected, totalOutstanding }
+export async function getFinanceStats(token) {
+  const response = await fetch(`${API_BASE_URL}/finance/stats`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch stats'))
+  return data
+}
+// ========== FINANCE — RECENT RECORDS ==========
+// Backend needs: GET /finance/adminView?limit=6 (admin only, newest first)
+export async function getFinanceRecentRecords(token) {
+  const response = await fetch(`${API_BASE_URL}/finance/adminView?limit=6`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch recent records'))
+  return data
+}
+// ========== FINANCE — ALL RECORDS (with optional filters) ==========
+// Backend needs: GET /finance/adminView?session=&semester=&status= (admin only)
+export async function getAllFinanceRecords({ session, semester, status } = {}, token) {
+  const params = new URLSearchParams()
+  if (session)  params.append('session',  session)
+  if (semester) params.append('semester', semester)
+  if (status)   params.append('status',   status)
+ 
+  const response = await fetch(`${API_BASE_URL}/finance/adminView?${params.toString()}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch records'))
+  return data
+}
+// ========== FINANCE — CREATE FINANCE RECORD ==========
+// POST /finance/create
+// Body: { studentId, session, semester, items: [{ label, amount }] }
+export async function createFinanceRecord({ studentId, session, semester, items }, token) {
+  const response = await fetch(`${API_BASE_URL}/finance/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ studentId, session, semester, items }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create finance record'))
+  return data
+}
+// ========== FINANCE — RECORD PAYMENT ==========
+// POST /finance/pay/:id
+// Body: { payments: [{ itemLabel, amountPaid }] }
+export async function recordFinancePayment(financeId, { payments }, token) {
+  const response = await fetch(`${API_BASE_URL}/finance/pay/${financeId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ payments }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to record payment'))
+  return data
+}
+
+// ========== FINANCE — CREATE BULK FINANCE RECORDS ==========
+// POST /finance/bulk
+// Body: { session, semester, items: [{ studentId, label, amount }] }
+export const createFinanceBulk = async (payload, token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/finance/bulk`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(token),
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const data = await response.json()
+
+    if (!response.ok) {
+      throw new Error(getErrorMessage(data, 'Failed to create bulk finance records'))
+    }
+
+    return data
+  } catch (err) {
+    throw new Error(err.message || 'Something went wrong')
+  }
+}
+// ========== ADMIN — GET STUDENTS BY FILTER ==========
+// GET /auth/student/filter?department=&level=&faculty=
+export async function getStudentsByFilter(params = {}, token) {
+  const query = new URLSearchParams()
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      query.append(key, value)
+    }
+  })
+
+  const response = await fetch(
+    `${API_BASE_URL}/auth/student/filter?${query.toString()}`,
+    {
+      headers: authHeaders(token),
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(data, 'Failed to fetch students'))
+  }
+
+  return data
+}
+export async function addItemToFinanceRecord(financeId, item, token) {
+  const response = await fetch(
+    `${API_BASE_URL}/finance/${financeId}/add-item`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders(token),
+      },
+      body: JSON.stringify(item),
+    }
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(data, 'Failed to add item'))
+  }
+
+  return data
+}
+
+
+// ========== TAC ADMIN ==========
+
+export async function getTACStats(token) {
+  const response = await fetch(`${API_BASE_URL}/idcard/stats`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch stats'))
+  return data
+}
+
+export async function getAllIdCards(token, { status } = {}) {
+  const params = status ? `?status=${status}` : ''
+  const response = await fetch(`${API_BASE_URL}/idcard/admin${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch ID cards'))
+  return data
+}
+
+export async function markIdCardCollected(idCardId, token) {
+  const response = await fetch(`${API_BASE_URL}/idcard/${idCardId}/collect`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to mark as collected'))
+  return data
+}
+
+export async function rejectIdCardAdmin(idCardId, reason, token) {
+  const response = await fetch(`${API_BASE_URL}/idcard/${idCardId}/reject`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ reason }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to reject ID card'))
+  return data
+}
+
+export async function registerStudentByAdmin(payload, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/student/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to register student'))
+  return data
+}
+
+export async function getAllStudents(token, query = '') {
+  const params = query ? `?query=${encodeURIComponent(query)}` : ''
+  const response = await fetch(`${API_BASE_URL}/auth/students${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch students'))
+  return data
+}
+
+export async function resetStudentPassword({ studentId, newPassword }, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/student/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ studentId, newPassword }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to reset password'))
+  return data
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── Change Password (shared across all admin types) ───────────────────────────
+ 
+export async function changeAdminPassword({ currentPassword, newPassword, confirmPassword }, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/admin/change-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to change password'))
+  return data
+}
+// ========== STUDENT SEARCH (shared — used by finance) ==========
+// Backend needs: GET /auth/student/search?query=xxx
+// Returns: [{ _id, matricNumber, name, department, level }]
+export async function searchStudents(query, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/student/search?query=${encodeURIComponent(query)}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to search students'))
+  return data
 }

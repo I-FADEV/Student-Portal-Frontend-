@@ -14,9 +14,33 @@ import Results from './pages/student/Results'
 import AdminLogin from './pages/auth/AdminLogin'
 import AdminProtectedRoute from './routes/AdminProtectedRoute'
 
-import GADashboard       from './pages/admin/ga/Dashboard'
-import TACDashboard      from './pages/admin/tac/Dashboard'
+// GA pages
+import GADashboard    from './pages/admin/ga/Dashboard'
+import CreateAdmin    from './pages/admin/ga/CreateAdmin'
+import ManageAdmins   from './pages/admin/ga/ManageAdmins'
+import ActivityLogs   from './pages/admin/ga/ActivityLogs'
+import ChangePassword from './pages/admin/ga/ChangePassword'
+
+// Registry Admin Pages
+import RegistryDashboard  from './pages/admin/registry/Dashboard'
+import Faculties          from './pages/admin/registry/Faculties'
+import Departments        from './pages/admin/registry/Departments'
+import GenerateMatric     from './pages/admin/registry/GenerateMatric'
+import RegistryPassword   from './pages/admin/registry/ChangePassword'
+
+//Bursar pages
 import BursarDashboard   from './pages/admin/bursar/Dashboard'
+import CreateRecord      from './pages/admin/bursar/CreateRecord'
+import ManageRecords     from './pages/admin/bursar/ManageRecords'
+import BursarChangePw    from './pages/admin/bursar/ChangePassword'
+
+// TAC pages
+import TACDashboard       from './pages/admin/tac/Dashboard'
+import RegisterStudent  from './pages/admin/tac/RegisterStudent'
+import Submissions      from './pages/admin/tac/Submissions'
+import ManageStudents   from './pages/admin/tac/ManageStudents'
+import TACChangePassword from './pages/admin/tac/ChangePassword'
+// Other admin dashboards
 import TimetableDashboard from './pages/admin/timetable/Dashboard'
 
 export default function App() {
@@ -84,7 +108,7 @@ export default function App() {
         }
       />
 
-      {/* ── Admin routes ── */}
+      {/* ── General Admin routes ── */}
       <Route
         path="/admin/ga"
         element={
@@ -94,21 +118,138 @@ export default function App() {
         }
       />
       <Route
-        path="/admin/tac"
+        path="/admin/ga/create"
         element={
-          <AdminProtectedRoute allowedRoles={['tac']}>
-            <TACDashboard />
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <CreateAdmin />
           </AdminProtectedRoute>
         }
       />
       <Route
-        path="/admin/bursar"
+        path="/admin/ga/admins"
         element={
-          <AdminProtectedRoute allowedRoles={['bursar']}>
-            <BursarDashboard />
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <ManageAdmins />
           </AdminProtectedRoute>
         }
       />
+      <Route
+        path="/admin/ga/logs"
+        element={
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <ActivityLogs />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/ga/password"
+        element={
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <ChangePassword />
+          </AdminProtectedRoute>
+        }
+      />
+
+
+      {/* Registry Admin Routes */}
+      <Route
+      path="/admin/registry"
+      element={
+        <AdminProtectedRoute allowedRoles={['registry']}>
+          <RegistryDashboard />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/registry/faculties"
+      element={
+        <AdminProtectedRoute allowedRoles={['registry']}>
+          <Faculties />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/registry/departments"
+      element={
+        <AdminProtectedRoute allowedRoles={['registry']}>
+          <Departments />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/registry/matric"
+      element={
+        <AdminProtectedRoute allowedRoles={['registry']}>
+          <GenerateMatric />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/registry/password"
+      element={
+        <AdminProtectedRoute allowedRoles={['registry']}>
+          <RegistryPassword />
+        </AdminProtectedRoute>
+      }
+    />
+    {/* Bursar Admin Routes */}
+      <Route
+      path="/admin/bursar"
+      element={
+        <AdminProtectedRoute allowedRoles={['bursar']}>
+          <BursarDashboard />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/bursar/create"
+      element={
+        <AdminProtectedRoute allowedRoles={['bursar']}>
+          <CreateRecord />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/bursar/records"
+      element={
+        <AdminProtectedRoute allowedRoles={['bursar']}>
+          <ManageRecords />
+        </AdminProtectedRoute>
+      }
+    />
+      <Route
+      path="/admin/bursar/change-password"
+      element={
+        <AdminProtectedRoute allowedRoles={['bursar']}>
+          <BursarChangePw />
+        </AdminProtectedRoute>
+      }
+    />
+    {/* ── TAC routes ── */}
+      <Route
+        path="/admin/tac"
+        element={<AdminProtectedRoute allowedRoles={['tac']}><TACDashboard /></AdminProtectedRoute>}
+      />
+      <Route
+        path="/admin/tac/register"
+        element={<AdminProtectedRoute allowedRoles={['tac']}><RegisterStudent /></AdminProtectedRoute>}
+      />
+      <Route
+        path="/admin/tac/submissions"
+        element={<AdminProtectedRoute allowedRoles={['tac']}><Submissions /></AdminProtectedRoute>}
+      />
+      <Route
+        path="/admin/tac/students"
+        element={<AdminProtectedRoute allowedRoles={['tac']}><ManageStudents /></AdminProtectedRoute>}
+      />
+      <Route
+        path="/admin/tac/password"
+        element={<AdminProtectedRoute allowedRoles={['tac']}><TACChangePassword /></AdminProtectedRoute>}
+      />
+
+      
+
+      {/* ── Other admin routes ── */}
       <Route
         path="/admin/timetable"
         element={

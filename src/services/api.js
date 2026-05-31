@@ -3,7 +3,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const ADMIN_TYPE_MAP = {
   general_admin:    { role: "ga",        route: "/admin/ga",        title: "General Admin" },
-  finance_admin:    { role: "bursar",    route: "/admin/nursar",    title: "Finance Admin" },
+  finance_admin:    { role: "bursar",    route: "/admin/bursar",    title: "Finance Admin" },
   timetable_admin:  { role: "timetable", route: "/admin/timetable", title: "Timetable Admin" },
   idcard_admin:     { role: "tac",       route: "/admin/tac",       title: "Idcard Admin" },
   registry_admin:   { role: 'registry', route: '/admin/registry', title: 'Registry Admin'   },
@@ -500,6 +500,183 @@ export async function resetStudentPassword({ studentId, newPassword }, token) {
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to reset password'))
   return data
+}
+
+
+export async function getAllFaculties(token) {
+  return getFaculties(token)   // calls the existing function
+}
+ 
+export async function getAllDepartments(token) {
+  return getDepartments(token) // calls the existing function
+}
+// ── TIMETABLE ADMIN — STATS ───────────────────────────────────────────────────
+// GET /timetable/stats
+// Returns: { totalCourses, totalSessions, totalResults, pendingClashes }
+export async function getTimetableStats(token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/stats`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch timetable stats'))
+  return data
+}
+ 
+// ── TIMETABLE COURSES (for generation stage) ─────────────────────────────────
+// GET /timetable/courses?session=&semester=
+export async function getTimetableCourses(session, semester, token) {
+  const params = new URLSearchParams()
+  if (session)  params.append('session',  session)
+  if (semester) params.append('semester', semester)
+  const response = await fetch(`${API_BASE_URL}/timetable/courses?${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch courses'))
+  return data
+}
+ 
+// POST /timetable/courses
+// Body: { courseCode, courseName, lecturer, lecturerPhone, session, semester,
+//         targets: [{ type, name, level }] }
+export async function createTimetableCourse(courseData, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/courses`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify(courseData),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create course'))
+  return data?.data || data
+}
+ 
+// PUT /timetable/courses/:id
+export async function updateTimetableCourse(id, courseData, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/courses/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify(courseData),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to update course'))
+  return data?.data || data
+}
+ 
+// DELETE /timetable/courses/:id
+export async function deleteTimetableCourse(id, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/courses/${id}`, {
+    method:  'DELETE',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete course'))
+  return data
+}
+ 
+// ── TIMETABLE ENTRIES (published — what students see) ────────────────────────
+ 
+// POST /timetable/save-bulk
+// Body: array of expanded entries:
+// [{ day, time, courseCode, courseName, lecturer, department, level, session, semester }]
+export async function saveTimetableBulk(entries, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/save-bulk`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify({ entries }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to save timetable'))
+  return data
+}
+ 
+// GET /timetable/admin?session=&semester=&department=&level=
+export async function getAdminTimetable({ session, semester, department, level } = {}, token) {
+  const params = new URLSearchParams()
+  if (session)    params.append('session',    session)
+  if (semester)   params.append('semester',   semester)
+  if (department) params.append('department', department)
+  if (level)      params.append('level',      level)
+  const response = await fetch(`${API_BASE_URL}/timetable/admin?${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch timetable'))
+  return data
+}
+ 
+// PUT /timetable/:id
+// Body: { day, time, lecturer }
+export async function updateTimetableEntry(id, updates, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify(updates),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to update entry'))
+  return data?.data || data
+}
+ 
+// DELETE /timetable/:id
+export async function deleteTimetableEntry(id, token) {
+  const response = await fetch(`${API_BASE_URL}/timetable/${id}`, {
+    method:  'DELETE',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete entry'))
+  return data
+}
+ 
+// ── RESULTS ──────────────────────────────────────────────────────────────────
+ 
+// GET /results/course?courseCode=&session=&semester=
+// Returns all students enrolled in that course + their existing results if any
+export async function getResultsByCourse({ courseCode, session, semester }, token) {
+  const params = new URLSearchParams({ courseCode, session, semester })
+  const response = await fetch(`${API_BASE_URL}/results/course?${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch course results'))
+  return data
+}
+ 
+// POST /results/bulk
+// Body: [{ courseCode, session, semester, studentName, matricNumber, test, exam, total, grade }]
+export async function saveResultsBulk(results, token) {
+  const response = await fetch(`${API_BASE_URL}/results/bulk`, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify({ results }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to save results'))
+  return data
+}
+ 
+// GET /results/student?query=&session=&semester=
+export async function getResultsByStudent({ query, session, semester }, token) {
+  const params = new URLSearchParams({ query, session, semester })
+  const response = await fetch(`${API_BASE_URL}/results/student?${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch student results'))
+  return data
+}
+ 
+// PUT /results/:id
+// Body: { test, exam, total, grade }
+export async function updateResult(id, updates, token) {
+  const response = await fetch(`${API_BASE_URL}/results/${id}`, {
+    method:  'PUT',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body:    JSON.stringify(updates),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to update result'))
+  return data?.data || data
 }
 
 

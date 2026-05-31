@@ -40,8 +40,15 @@ import RegisterStudent  from './pages/admin/tac/RegisterStudent'
 import Submissions      from './pages/admin/tac/Submissions'
 import ManageStudents   from './pages/admin/tac/ManageStudents'
 import TACChangePassword from './pages/admin/tac/ChangePassword'
-// Other admin dashboards
+
+
+// Timetable pages
 import TimetableDashboard from './pages/admin/timetable/Dashboard'
+import ManageCourses      from './pages/admin/timetable/ManageCourses'
+import GenerateTimetable  from './pages/admin/timetable/GenerateTimetable'
+import ViewTimetable      from './pages/admin/timetable/ViewTimetable'
+import TimetableResults   from './pages/admin/timetable/Results'
+import TimetableChangePw  from './pages/admin/timetable/ChangePassword'
 
 export default function App() {
   return (
@@ -247,14 +254,52 @@ export default function App() {
         element={<AdminProtectedRoute allowedRoles={['tac']}><TACChangePassword /></AdminProtectedRoute>}
       />
 
-      
-
-      {/* ── Other admin routes ── */}
+      {/* timetable routes */}
       <Route
         path="/admin/timetable"
         element={
           <AdminProtectedRoute allowedRoles={['timetable']}>
             <TimetableDashboard />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable/courses"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <ManageCourses />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable/generate"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <GenerateTimetable />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable/view"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <ViewTimetable />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable/results"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <TimetableResults />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/timetable/password"
+        element={
+          <AdminProtectedRoute allowedRoles={['timetable']}>
+            <TimetableChangePw />
           </AdminProtectedRoute>
         }
       />

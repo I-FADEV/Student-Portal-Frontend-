@@ -384,11 +384,9 @@ export const createFinanceBulk = async (payload, token) => {
 export async function getStudentsByFilter(params = {}, token) {
   const query = new URLSearchParams()
 
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== '') {
-      query.append(key, value)
-    }
-  })
+  if (params.department) query.append('department', params.department)
+  if (params.level) query.append('level', params.level)
+  if (params.faculty) query.append('faculty', params.faculty)
 
   const response = await fetch(
     `${API_BASE_URL}/auth/student/filter?${query.toString()}`,
@@ -439,9 +437,12 @@ export async function getTACStats(token) {
   return data
 }
 
-export async function getAllIdCards(token, { status } = {}) {
-  const params = status ? `?status=${status}` : ''
-  const response = await fetch(`${API_BASE_URL}/idcard/admin${params}`, {
+export async function getAllIdCards({ status, limit } = {}, token) {
+  const params = new URLSearchParams()
+  if (status) params.append('status', status)
+  if (limit)  params.append('limit',  limit)
+  const paramStr = params.toString() ? `?${params.toString()}` : ''
+  const response = await fetch(`${API_BASE_URL}/idcard/admin${paramStr}`, {
     headers: authHeaders(token),
   })
   const data = await response.json()
@@ -579,7 +580,7 @@ export async function deleteTimetableCourse(id, token) {
 // Body: array of expanded entries:
 // [{ day, time, courseCode, courseName, lecturer, department, level, session, semester }]
 export async function saveTimetableBulk(entries, token) {
-  const response = await fetch(`${API_BASE_URL}/timetable/save-bulk`, {
+  const response = await fetch(`${API_BASE_URL}/timetable/bulk`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body:    JSON.stringify({ entries }),
@@ -711,7 +712,7 @@ export async function updateResult(id, updates, token) {
 // ── Change Password (shared across all admin types) ───────────────────────────
  
 export async function changeAdminPassword({ currentPassword, newPassword, confirmPassword }, token) {
-  const response = await fetch(`${API_BASE_URL}/auth/admin/change-password`, {
+  const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
@@ -731,3 +732,8 @@ export async function searchStudents(query, token) {
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to search students'))
   return data
 }
+// Aliases — pages import these names
+export const getBursarStats         = getFinanceStats
+export const getBursarRecentRecords = getFinanceRecentRecords
+export const rejectIdCard           = rejectIdCardAdmin
+export const registerStudent        = registerStudentByAdmin

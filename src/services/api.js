@@ -635,7 +635,7 @@ export async function deleteTimetableEntry(id, token) {
 // Returns all students enrolled in that course + their existing results if any
 export async function getResultsByCourse({ courseCode, session, semester }, token) {
   const params = new URLSearchParams({ courseCode, session, semester })
-  const response = await fetch(`${API_BASE_URL}/results/course?${params}`, {
+  const response = await fetch(`${API_BASE_URL}/results/admin-view?${params}`, {
     headers: authHeaders(token),
   })
   const data = await response.json()
@@ -713,7 +713,7 @@ export async function updateResult(id, updates, token) {
  
 export async function changeAdminPassword({ currentPassword, newPassword, confirmPassword }, token) {
   const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
-    method: 'POST',
+    method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
     body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
   })

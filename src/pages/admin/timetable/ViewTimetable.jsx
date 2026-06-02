@@ -47,7 +47,10 @@ export default function ViewTimetable() {
 
   useEffect(() => {
     getAllDepartments(adminToken)
-      .then(d => setDepartments(d))
+      .then(d => {
+        const deptList = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : []
+        setDepartments(deptList)
+      })
       .catch(() => {})
   }, [adminToken])
 

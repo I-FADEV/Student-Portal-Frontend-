@@ -48,11 +48,20 @@ export default function TimetableDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getTimetableStats(adminToken)
-      .then(data => setStats(data))
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [adminToken])
+  getTimetableStats(adminToken)
+    .then(res => {
+      const data = res?.data || res
+
+      setStats({
+        totalCourses: data.totalCourses || 0,
+        totalSessions: data.totalSessions || 0,
+        totalResults: data.totalResults || 0,
+        totalStudents: data.totalStudents || 0,
+      })
+    })
+    .catch(() => {})
+    .finally(() => setLoading(false))
+}, [adminToken])
 
   const cards = [
     { label: 'Courses Added',       value: stats?.totalCourses    ?? 0, icon: BookOpen,      accent: 'bg-blue-600',    path: '/admin/timetable/courses'  },

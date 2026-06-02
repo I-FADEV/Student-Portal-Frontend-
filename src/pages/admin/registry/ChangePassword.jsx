@@ -38,7 +38,7 @@ function PasswordInput({ label, value, onChange, placeholder, id }) {
 }
 
 export default function ChangePassword() {
-  const { token } = useAdminAuth()
+  const { adminToken } = useAdminAuth()
 
   const [currentPwd,  setCurrentPwd]  = useState('')
   const [newPwd,      setNewPwd]      = useState('')
@@ -65,7 +65,7 @@ export default function ChangePassword() {
 
     setLoading(true)
     try {
-      await changeAdminPassword({ currentPassword: currentPwd, newPassword: newPwd, confirmPassword: confirmPwd }, token)
+      await changeAdminPassword({ currentPassword: currentPwd, newPassword: newPwd, confirmPassword: confirmPwd }, adminToken)
       setSuccess(true)
       setCurrentPwd('')
       setNewPwd('')

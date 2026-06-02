@@ -41,7 +41,7 @@ const LEVEL_OPTIONS = [
 const blankForm = { name: '', facultyId: '', minLevel: 100, maxLevel: 400 }
 
 export default function Departments() {
-  const { token } = useAdminAuth()
+  const { adminToken } = useAdminAuth()
 
   const [faculties,    setFaculties]    = useState([])
   const [departments,  setDepartments]  = useState([])
@@ -68,16 +68,16 @@ export default function Departments() {
 
   const loadAll = () => {
     setLoading(true)
-    Promise.all([getFaculties(token), getDepartments(token)])
+    Promise.all([getFaculties(adminToken), getDepartments(adminToken)])
       .then(([fac, dep]) => {
-        setFaculties(Array.isArray(fac) ? fac : fac?.faculties || [])
-        setDepartments(Array.isArray(dep) ? dep : dep?.departments || [])
+        setFaculties(Array.isArray(fac) ? fac : fac?.data || [])
+        setDepartments(Array.isArray(dep) ? dep : dep?.data || [])
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { loadAll() }, [token])
+  useEffect(() => { loadAll() }, [adminToken])
 
   const openAdd = () => {
     setEditTarget(null)
@@ -105,10 +105,10 @@ export default function Departments() {
     setFormError('')
     try {
       if (editTarget) {
-        await updateDepartment(editTarget._id, form, token)
+        await updateDepartment(editTarget._id, form, adminToken)
         showToast('Department updated')
       } else {
-        await createDepartment(form, token)
+        await createDepartment(form, adminToken)
         showToast('Department added successfully')
       }
       setShowForm(false)
@@ -123,7 +123,7 @@ export default function Departments() {
   const handleDelete = async (id) => {
     setDeleting(true)
     try {
-      await deleteDepartment(id, token)
+      await deleteDepartment(id, adminToken)
       setDeleteId(null)
       loadAll()
       showToast('Department deleted')

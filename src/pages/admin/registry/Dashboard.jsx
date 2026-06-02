@@ -47,18 +47,18 @@ function Skeleton({ className = '' }) {
 }
 
 export default function RegistryDashboard() {
-  const { token }  = useAdminAuth()
+  const { adminToken }  = useAdminAuth()
   const navigate   = useNavigate()
   const [stats,    setStats]   = useState(null)
   const [loading,  setLoading] = useState(true)
   const [error,    setError]   = useState(null)
 
   useEffect(() => {
-    getRegistryStats(token)
+    getRegistryStats(adminToken)
       .then(setStats)
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
-  }, [token])
+  }, [adminToken])
 
   return (
     <AdminLayout navItems={REGISTRY_NAV} title="Registry Admin">

@@ -19,10 +19,10 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',       path: '/admin/finance',                 icon: TrendingUp },
-  { label: 'Create Record',   path: '/admin/finance/create',          icon: Plus },
-  { label: 'Manage Records',  path: '/admin/finance/records',         icon: FileText },
-  { label: 'Change Password', path: '/admin/finance/change-password', icon: Wallet },
+  { label: 'Dashboard',       path: '/admin/bursar',                 icon: TrendingUp },
+  { label: 'Create Record',   path: '/admin/bursar/create',          icon: Plus },
+  { label: 'Manage Records',  path: '/admin/bursar/records',         icon: FileText },
+  { label: 'Change Password', path: '/admin/bursar/change-password', icon: Wallet },
 ]
 
 const PRESET_LABELS = [
@@ -337,7 +337,7 @@ export default function CreateRecord() {
             <button onClick={resetForm} className="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-800 transition-colors">
               Create Another
             </button>
-            <button onClick={() => navigate('/admin/finance/records')} className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-bold hover:bg-amber-400 transition-colors">
+            <button onClick={() => navigate('/admin/bursar/records')} className="px-5 py-2.5 rounded-xl bg-amber-500 text-slate-950 text-sm font-bold hover:bg-amber-400 transition-colors">
               View Records
             </button>
           </div>

@@ -13,7 +13,7 @@ function Skeleton({ className = '' }) {
 }
 
 export default function GenerateMatric() {
-  const { token } = useAdminAuth()
+  const { adminToken } = useAdminAuth()
 
   const [faculties,    setFaculties]    = useState([])
   const [departments,  setDepartments]  = useState([])
@@ -32,14 +32,14 @@ export default function GenerateMatric() {
   const [history,      setHistory]      = useState([])
 
   useEffect(() => {
-    Promise.all([getFaculties(token), getDepartments(token)])
+    Promise.all([getFaculties(adminToken), getDepartments(adminToken)])
       .then(([fac, dep]) => {
         setFaculties(Array.isArray(fac) ? fac : fac?.faculties || [])
         setDepartments(Array.isArray(dep) ? dep : dep?.departments || [])
       })
       .catch(() => {})
       .finally(() => setLoadingDeps(false))
-  }, [token])
+  }, [adminToken])
 
   const filteredDepts = selectedFac
     ? departments.filter((d) => (d.faculty?._id || d.facultyId) === selectedFac)
@@ -58,7 +58,7 @@ export default function GenerateMatric() {
       // Matric number generation logic will be added once the format is confirmed.
       // Replace the mock below with the real API call:
       //
-      //   const result = await generateMatricNumber({ departmentId: selectedDept, year }, token)
+      //   const result = await generateMatricNumber({ departmentId: selectedDept, year }, adminToken)
       //   setGenerated(result)
       //
       await new Promise((r) => setTimeout(r, 800)) // simulate network

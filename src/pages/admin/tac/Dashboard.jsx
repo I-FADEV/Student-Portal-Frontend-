@@ -63,7 +63,7 @@ export default function TACDashboard() {
   useEffect(() => {
     Promise.allSettled([
       getTACStats(adminToken),
-      getAllIdCards(adminToken, { status: 'pending' }),
+      getAllIdCards({ status: 'pending' }, adminToken),
     ]).then(([s, r]) => {
       if (s.status === 'fulfilled') setStats(s.value?.data || s.value)
       if (r.status === 'fulfilled') {

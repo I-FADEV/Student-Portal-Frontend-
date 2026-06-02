@@ -148,7 +148,12 @@ export default function GenerateTimetable() {
 
   useEffect(() => {
     Promise.all([getAllFaculties(adminToken), getAllDepartments(adminToken)])
-      .then(([f, d]) => { setFaculties(f); setDepartments(d) })
+      .then(([f, d]) => {  
+        const facList = Array.isArray(f) ? f : Array.isArray(f?.data) ? f.data : [] 
+        const depList = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : [] 
+        setFaculties(facList); 
+        setDepartments(depList)
+      })
       .catch(() => {})
   }, [adminToken])
 

@@ -14,10 +14,10 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',       path: '/admin/finance',                 icon: TrendingUp },
-  { label: 'Create Record',   path: '/admin/finance/create',          icon: Plus },
-  { label: 'Manage Records',  path: '/admin/finance/records',         icon: FileText },
-  { label: 'Change Password', path: '/admin/finance/change-password', icon: Wallet },
+  { label: 'Dashboard',       path: '/admin/bursar',                 icon: TrendingUp },
+  { label: 'Create Record',   path: '/admin/bursar/create',          icon: Plus },
+  { label: 'Manage Records',  path: '/admin/bursar/records',         icon: FileText },
+  { label: 'Change Password', path: '/admin/bursar/change-password', icon: Wallet },
 ]
 
 const SESSIONS  = ['2025/2026', '2024/2025', '2023/2024', '2022/2023']

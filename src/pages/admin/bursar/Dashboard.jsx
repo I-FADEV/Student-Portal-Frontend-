@@ -18,10 +18,10 @@ import {
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',       path: '/admin/Finance',                icon: TrendingUp },
-  { label: 'Create Record',   path: '/admin/Finance/create',         icon: Plus },
-  { label: 'Manage Records',  path: '/admin/Finance/records',        icon: FileText },
-  { label: 'Change Password', path: '/admin/Finance/change-password',icon: Wallet },
+  { label: 'Dashboard',       path: '/admin/bursar',                icon: TrendingUp },
+  { label: 'Create Record',   path: '/admin/bursar/create',         icon: Plus },
+  { label: 'Manage Records',  path: '/admin/bursar/records',        icon: FileText },
+  { label: 'Change Password', path: '/admin/bursar/change-password',icon: Wallet },
 ]
 
 function StatCard({ label, value, icon: Icon, color, loading }) {
@@ -94,7 +94,7 @@ export default function FinanceDashboard() {
         {/* Quick actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <button
-            onClick={() => navigate('/admin/Finance/create')}
+            onClick={() => navigate('/admin/bursar/create')}
             className="group flex items-center gap-4 p-5 bg-amber-500/10 border border-amber-500/20 rounded-2xl hover:bg-amber-500/20 transition-all duration-200 text-left"
           >
             <div className="w-11 h-11 rounded-xl bg-amber-500/20 flex items-center justify-center flex-shrink-0 group-hover:bg-amber-500/30 transition-colors">
@@ -108,7 +108,7 @@ export default function FinanceDashboard() {
           </button>
 
           <button
-            onClick={() => navigate('/admin/Finance/records')}
+            onClick={() => navigate('/admin/bursar/records')}
             className="group flex items-center gap-4 p-5 bg-slate-800/50 border border-slate-700/50 rounded-2xl hover:bg-slate-800 transition-all duration-200 text-left"
           >
             <div className="w-11 h-11 rounded-xl bg-slate-700/50 flex items-center justify-center flex-shrink-0 group-hover:bg-slate-700 transition-colors">
@@ -127,7 +127,7 @@ export default function FinanceDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-white">Recent Records</h2>
             <button
-              onClick={() => navigate('/admin/Finance/records')}
+              onClick={() => navigate('/admin/bursar/records')}
               className="text-amber-400 text-xs font-semibold hover:text-amber-300 transition-colors"
             >
               View all →

@@ -114,7 +114,8 @@ export default function Results() {
     if (!session || !semester) return
     setLoadingC(true)
     getTimetableCourses(session, semester, adminToken)
-      .then(data => setCourses(Array.isArray(data) ? data : data?.data || []))
+      .then(data => setCourses(
+        Array.isArray(data) ? data : data?.data || []))
       .catch(() => {})
       .finally(() => setLoadingC(false))
   }, [session, semester])

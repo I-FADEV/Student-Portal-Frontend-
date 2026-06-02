@@ -200,7 +200,7 @@ export default function Submissions() {
     setLoading(true)
     setError(null)
     const param = status === 'all' ? {} : { status }
-    getAllIdCards(adminToken, param)
+    getAllIdCards(param, adminToken)
       .then(data => setCards(data?.data || data || []))
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))

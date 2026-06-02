@@ -33,7 +33,7 @@ function Toast({ message, type, onClose }) {
 }
 
 export default function Faculties() {
-  const { token } = useAdminAuth()
+  const { adminToken } = useAdminAuth()
 
   const [faculties,  setFaculties]  = useState([])
   const [loading,    setLoading]    = useState(true)
@@ -57,20 +57,23 @@ export default function Faculties() {
 
   const load = () => {
     setLoading(true)
-    getFaculties(token)
-      .then((data) => setFaculties(Array.isArray(data) ? data : data?.faculties || []))
+    getFaculties(adminToken)
+      .then((res) => {
+        console.log('Faculty response:', res)
+        setFaculties(res.data || [])
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [token])
+  useEffect(() => { load() }, [adminToken])
 
   const handleAdd = async () => {
     if (!newName.trim()) { setAddError('Faculty name is required'); return }
     setAdding(true)
     setAddError('')
     try {
-      await createFaculty({ name: newName.trim() }, token)
+      await createFaculty({ name: newName.trim() }, adminToken)
       setNewName('')
       setShowForm(false)
       load()
@@ -85,7 +88,7 @@ export default function Faculties() {
   const handleDelete = async (id) => {
     setDeleting(true)
     try {
-      await deleteFaculty(id, token)
+      await deleteFaculty(id, adminToken)
       setDeleteId(null)
       load()
       showToast('Faculty deleted')

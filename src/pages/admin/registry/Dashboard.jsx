@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminLayout from '../../../components/shared/AdminLayout'
 import { useAdminAuth } from '../../../context/AdminAuthContext'
-import { getRegistryStats } from '../../../services/api'
+import { getRegistryStats, getMatricStats } from '../../../services/api'
 import {
   Building2, GraduationCap, Hash, ChevronRight,
   Layers, BookOpen, AlertCircle, TrendingUp,
@@ -50,13 +50,22 @@ export default function RegistryDashboard() {
   const { adminToken }  = useAdminAuth()
   const navigate   = useNavigate()
   const [stats,    setStats]   = useState(null)
+  const [matricStats, setMatricStats] = useState(null)
   const [loading,  setLoading] = useState(true)
   const [error,    setError]   = useState(null)
 
   useEffect(() => {
-    getRegistryStats(adminToken)
-      .then(setStats)
-      .catch((err) => setError(err.message))
+    Promise.allSettled([
+      getRegistryStats(adminToken),
+      getMatricStats(adminToken),
+    ]).then(([registryResult, matricResult]) => {
+      if (registryResult.status === 'fulfilled') {
+        setStats(registryResult.value)
+      }
+      if (matricResult.status === 'fulfilled') {
+        setMatricStats(matricResult.value)
+      }
+    }).catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [adminToken])
 
@@ -114,7 +123,7 @@ export default function RegistryDashboard() {
             <StatCard
               icon={Hash}
               label="Matric Generated Today"
-              value={stats?.matricToday ?? 0}
+              value={matricStats?.today ?? 0}
               sub="Numbers issued today"
               color="bg-cyan-900/40 border-cyan-700/40 text-cyan-100"
               onClick={() => navigate('/admin/registry/matric')}
@@ -122,7 +131,7 @@ export default function RegistryDashboard() {
             <StatCard
               icon={GraduationCap}
               label="Total Matric Generated"
-              value={stats?.matricTotal ?? 0}
+              value={matricStats?.total ?? 0}
               sub="All time"
               color="bg-violet-900/40 border-violet-700/40 text-violet-100"
               onClick={() => navigate('/admin/registry/matric')}

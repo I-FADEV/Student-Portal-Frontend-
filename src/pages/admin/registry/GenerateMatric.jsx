@@ -48,14 +48,14 @@ export default function GenerateMatric() {
       .finally(() => setLoadingDeps(false))
   }, [adminToken])
 
-  // Fetch counter preview when department and level change
+  // Fetch counter preview when level changes (counter is shared across all departments per level)
   useEffect(() => {
-    if (selectedDept && level) {
+    if (level) {
       fetchCounterPreview()
     } else {
       setCounterPreview(null)
     }
-  }, [selectedDept, level])
+  }, [level])
 
   const filteredDepts = selectedFac
     ? departments.filter((d) => (d.faculty?._id || d.facultyId) === selectedFac)
@@ -74,10 +74,10 @@ export default function GenerateMatric() {
   const gradYear = calculateGradYear()
 
   const fetchCounterPreview = async () => {
-    if (!selectedDept || !level) return
+    if (!level) return
     setLoadingCounter(true)
     try {
-      const result = await getMatricCounter(selectedDept, level, adminToken)
+      const result = await getMatricCounter(level, adminToken)
       setCounterPreview(result.data || result)
     } catch (err) {
       setCounterPreview(null)

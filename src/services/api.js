@@ -292,8 +292,8 @@ export async function deleteDepartment(id, token) {
 
 // ── MATRIC NUMBER GENERATION ─────────────────────────────────────────────────────
 
-export async function getMatricCounter(departmentId, level, token) {
-  const params = new URLSearchParams({ departmentId, level: level.toString() })
+export async function getMatricCounter(level, token) {
+  const params = new URLSearchParams({ level: level.toString() })
   const response = await fetch(`${API_BASE_URL}/matric/counter?${params}`, {
     headers: authHeaders(token),
   })
@@ -310,6 +310,15 @@ export async function generateMatricNumber({ departmentId, level, isTransfer, ma
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to generate matric number'))
+  return data
+}
+
+export async function getMatricStats(token) {
+  const response = await fetch(`${API_BASE_URL}/matric/stats`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch matric stats'))
   return data
 }
 

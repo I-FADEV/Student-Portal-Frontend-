@@ -535,6 +535,15 @@ export async function resetStudentPassword({ studentId, newPassword }, token) {
   return data
 }
 
+export async function deleteStudent(studentId, token) {
+  const response = await fetch(`${API_BASE_URL}/auth/student/${studentId}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete student'))
+  return data
+}
 
 export async function getAllFaculties(token) {
   return getFaculties(token)   // calls the existing function

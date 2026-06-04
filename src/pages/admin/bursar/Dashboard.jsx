@@ -62,7 +62,7 @@ export default function FinanceDashboard() {
       getFinanceStats(adminToken),
       getFinanceRecentRecords(adminToken),
     ]).then(([s, r]) => {
-      if (s.status === 'fulfilled') setStats(s.value)
+      if (s.status === 'fulfilled') setStats(s.value?.data)
       if (r.status === 'fulfilled') setRecent(r.value?.data || [])
     }).finally(() => setLoading(false))
   }, [adminToken])

@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback } from 'react'
 import AdminLayout from '../../../components/shared/AdminLayout'
 import { TAC_NAV } from './Dashboard'
 import { useAdminAuth } from '../../../context/AdminAuthContext'
-import { getAllStudents, resetStudentPassword } from '../../../services/api'
+import { getAllStudents, resetStudentPassword, deleteStudent } from '../../../services/api'
 import {
   Users, Search, KeyRound, AlertCircle,
   RefreshCw, X, Eye, EyeOff, CheckCircle2, Loader2,
+  Trash2,
 } from 'lucide-react'
 
 function Skeleton({ className = '' }) {
@@ -113,6 +114,69 @@ function ResetModal({ student, onClose }) {
   )
 }
 
+// ── Delete student modal ───────────────────────────────────────────────────────
+function DeleteModal({ student, onClose, onDelete }) {
+  const { adminToken } = useAdminAuth()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+
+  const handleDelete = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      await deleteStudent(student._id, adminToken)
+      onDelete()
+      onClose()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-white">Delete Student</h2>
+          <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+        </div>
+
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30">
+          <Trash2 size={20} className="text-red-400 flex-shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <p className="text-white text-sm font-semibold">Are you sure?</p>
+            <p className="text-slate-400 text-xs">
+              This will permanently delete <span className="text-white font-semibold">{student.name || student.matricNumber}</span>.
+              This action cannot be undone.
+            </p>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs">
+            <AlertCircle size={14} className="flex-shrink-0" />{error}
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-1">
+          <button onClick={onClose} disabled={loading} className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-white text-sm font-semibold transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={loading}
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+          >
+            {loading ? <Loader2 size={15} className="animate-spin" /> : <Trash2 size={15} />}
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function ManageStudents() {
   const { adminToken } = useAdminAuth()
@@ -121,6 +185,7 @@ export default function ManageStudents() {
   const [error,     setError]     = useState(null)
   const [search,    setSearch]    = useState('')
   const [resetTarget, setResetTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
 
   const fetchStudents = useCallback((q = '') => {
     setLoading(true)
@@ -139,9 +204,14 @@ export default function ManageStudents() {
     return () => clearTimeout(t)
   }, [search])
 
+  const handleDeleteSuccess = () => {
+    fetchStudents(search)
+  }
+
   return (
     <>
       {resetTarget && <ResetModal student={resetTarget} onClose={() => setResetTarget(null)} />}
+      {deleteTarget && <DeleteModal student={deleteTarget} onClose={() => setDeleteTarget(null)} onDelete={handleDeleteSuccess} />}
 
       <AdminLayout navItems={TAC_NAV}>
         <div className="space-y-6">
@@ -196,7 +266,7 @@ export default function ManageStudents() {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-slate-800/50">
-                      {['#', 'Name', 'Matric No.', 'Faculty', 'Department', 'Level', ''].map(h => (
+                      {['#', 'Name', 'Matric No.', 'Faculty', 'Department', 'Level', 'Actions'].map(h => (
                         <th key={h} className="px-5 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wide">{h}</th>
                       ))}
                     </tr>
@@ -211,13 +281,22 @@ export default function ManageStudents() {
                         <td className="px-5 py-3.5 text-slate-400 text-xs">{s.department || '—'}</td>
                         <td className="px-5 py-3.5 text-slate-400 text-xs">{s.level ? `${s.level} Level` : '—'}</td>
                         <td className="px-5 py-3.5">
-                          <button
-                            onClick={() => setResetTarget(s)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/30 text-xs font-semibold transition-all"
-                          >
-                            <KeyRound size={12} />
-                            Reset Password
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setResetTarget(s)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-amber-400 hover:border-amber-500/30 text-xs font-semibold transition-all"
+                            >
+                              <KeyRound size={12} />
+                              Reset
+                            </button>
+                            <button
+                              onClick={() => setDeleteTarget(s)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/30 text-xs font-semibold transition-all"
+                            >
+                              <Trash2 size={12} />
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

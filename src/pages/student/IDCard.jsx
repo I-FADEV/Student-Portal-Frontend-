@@ -46,6 +46,14 @@ const STATUS_META = {
     text: 'text-blue-700',
     desc: 'Your ID card has been collected.',
   },
+  rejected: {
+    label: 'Rejected',
+    icon: AlertCircle,
+    bg: 'bg-red-50',
+    border: 'border-red-200',
+    text: 'text-red-700',
+    desc: 'Your ID card request was rejected. You may resubmit after correcting the issues.',
+  },
 }
 
 // ─── Status Banner ────────────────────────────────────────────────────────────
@@ -291,16 +299,19 @@ export default function IDCard() {
   useEffect(() => {
     Promise.allSettled([getStudentIDCard(token), getStudentProfile(token)])
       .then(([c, p]) => {
-        if (c.status === 'fulfilled') setIdCard(c.value)
+        if (c.status === 'fulfilled') {
+          const idCardData = c.value?.data || c.value
+          setIdCard(idCardData)
+        }
         if (p.status === 'fulfilled') {
-          const prof = p.value
+          const prof = p.value?.data || p.value
           setProfile(prof)
           setFormData(prev => ({
             ...prev,
             matricNumber: prof.matricNumber || '',
             department: prof.department || '',
             level: prof.level ? String(prof.level) : '',
-            session: prof.currentSession || '',
+            session: prof.currentSession || prof.session || '',
           }))
         }
       })
@@ -387,6 +398,7 @@ export default function IDCard() {
   const status = (idCard?.status || 'unsubmitted').toLowerCase()
   const feePaid = idCard?.feePaid === true  // bursar has marked this student's fee as paid
   const alreadySubmitted = status === 'pending' || status === 'collected'
+  const isRejected = status === 'rejected'  // allow resubmission if rejected
 
   // ── CASE 1: Already submitted (pending or collected) ──
   if (alreadySubmitted) {
@@ -466,7 +478,7 @@ export default function IDCard() {
           <p className="text-slate-500 text-sm mt-1">Student ID card request.</p>
         </div>
 
-        <StatusBanner status="unsubmitted" />
+        <StatusBanner status={isRejected ? 'rejected' : 'unsubmitted'} />
 
         {/* Locked notice */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 flex flex-col items-center text-center gap-4">
@@ -490,6 +502,101 @@ export default function IDCard() {
           <p>After paying, log out and log back in — the form will unlock automatically once the Bursar confirms your payment.</p>
         </div>
       </div>
+    )
+  }
+
+  // ── CASE 2.5: Rejected but fee paid - show rejection message with option to resubmit ──
+  if (isRejected) {
+    return (
+      <>
+        {showConfirm && (
+          <ConfirmModal
+            onConfirm={handleSubmitConfirmed}
+            onCancel={() => setShowConfirm(false)}
+            submitting={submitting}
+          />
+        )}
+
+        <div className="space-y-6 max-w-3xl">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">ID Card Application</h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Your previous submission was rejected. You may resubmit after correcting the issues.
+            </p>
+          </div>
+
+          <StatusBanner status="rejected" />
+
+          {idCard && (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
+              <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Previously Submitted Information</h2>
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                {/* Photo */}
+                <div className="flex-shrink-0">
+                  {idCard.photoURL ? (
+                    <img
+                      src={idCard.photoURL}
+                      alt="Passport"
+                      className="w-28 h-32 object-cover rounded-xl border-2 border-slate-200 shadow"
+                    />
+                  ) : (
+                    <div className="w-28 h-32 bg-slate-100 rounded-xl border-2 border-slate-200 flex items-center justify-center">
+                      <User size={32} className="text-slate-400" />
+                    </div>
+                  )}
+                </div>
+                {/* Info grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-slate-600 flex-1">
+                  {[
+                    ['Full Name',          idCard.fullName],
+                    ['Matric Number',      idCard.matricNumber || profile?.matricNumber],
+                    ['Nationality',        idCard.nationality],
+                    ['Date of Birth',      idCard.dateOfBirth ? new Date(idCard.dateOfBirth).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
+                    ['Department',         idCard.department || profile?.department],
+                    ['Level',              idCard.level ? `${idCard.level} Level` : profile?.level ? `${profile.level} Level` : '—'],
+                    ['Gender',             idCard.gender],
+                    ['Phone',              idCard.phone],
+                    ['Academic Year',      idCard.session || profile?.currentSession],
+                    ['Rejected At',        idCard.rejectedAt ? new Date(idCard.rejectedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <span className="font-medium text-slate-700">{label}: </span>
+                      <span>{value || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-sm font-medium w-fit">
+            <CheckCircle2 size={16} />
+            ID card fee confirmed. You may now resubmit your request.
+          </div>
+
+          <button
+            onClick={() => {
+              setFormData(prev => ({
+                ...prev,
+                fullName: idCard?.fullName || '',
+                nationality: idCard?.nationality || '',
+                dateOfBirth: idCard?.dateOfBirth || '',
+                gender: idCard?.gender || '',
+                phone: idCard?.phone || '',
+              }))
+              if (idCard?.photoURL) {
+                setPhotoPreview(idCard.photoURL)
+                // Note: We can't restore the actual file from URL, user needs to re-upload
+              }
+              setActiveTab('form')
+            }}
+            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm shadow-md hover:shadow-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+          >
+            <Upload size={18} />
+            Resubmit ID Card Request
+          </button>
+        </div>
+      </>
     )
   }
 

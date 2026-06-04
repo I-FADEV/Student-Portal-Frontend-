@@ -39,6 +39,13 @@ function idCardStatusMeta(status) {
         icon: PackageCheck,
         note: 'Your ID card has been collected.',
       }
+    case 'rejected':
+      return {
+        label: 'Rejected',
+        color: 'text-red-600 bg-red-50 border-red-200',
+        icon: AlertCircle,
+        note: 'Your ID card request was rejected. You may resubmit after correcting the issues.',
+      }
     case 'unsubmitted':
     default:
       return {
@@ -100,7 +107,14 @@ export default function Dashboard() {
         getStudentIDCard(token),
       ])
       if (p.status === 'fulfilled') setProfile(p.value)
-      if (f.status === 'fulfilled') setFinance(f.value)
+      if (f.status === 'fulfilled') {
+        const financeData = f.value?.data || f.value
+        if (Array.isArray(financeData)) {
+          setFinance(financeData[0]) // Use the first record for display
+        } else {
+          setFinance(financeData)
+        }
+      }
       if (c.status === 'fulfilled') setIdCard(c.value)
       setLoading(false)
     }

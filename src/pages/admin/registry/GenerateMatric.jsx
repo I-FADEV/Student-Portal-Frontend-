@@ -243,12 +243,12 @@ export default function GenerateMatric() {
                   <button
                     onClick={() => setIsTransfer(!isTransfer)}
                     className={`w-12 h-6 rounded-full transition-colors relative ${
-                      isTransfer ? 'bg-cyan-600' : 'bg-slate-600'
+                      isTransfer ? 'bg-cyan-600' : 'bg-slate-500'
                     }`}
                   >
                     <span
                       className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                        isTransfer ? 'translate-x-7' : 'translate-x-1'
+                        isTransfer ? 'translate-x-1' : 'translate-x-[-21px]'
                       }`}
                     />
                   </button>

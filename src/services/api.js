@@ -258,22 +258,22 @@ export async function getDepartments(token) {
   return data
 }
  
-export async function createDepartment({ name, facultyId, minLevel, maxLevel }, token) {
+export async function createDepartment({ name, facultyId, minLevel, maxLevel, abbreviation }, token) {
   const response = await fetch(`${API_BASE_URL}/registry/departments`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ name, facultyId, minLevel, maxLevel }),
+    body: JSON.stringify({ name, facultyId, minLevel, maxLevel, abbreviation }),
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create department'))
   return data
 }
  
-export async function updateDepartment(id, { name, facultyId, minLevel, maxLevel }, token) {
+export async function updateDepartment(id, { name, facultyId, minLevel, maxLevel, abbreviation }, token) {
   const response = await fetch(`${API_BASE_URL}/registry/departments/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ name, facultyId, minLevel, maxLevel }),
+    body: JSON.stringify({ name, facultyId, minLevel, maxLevel, abbreviation }),
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to update department'))
@@ -287,6 +287,29 @@ export async function deleteDepartment(id, token) {
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to delete department'))
+  return data
+}
+
+// ── MATRIC NUMBER GENERATION ─────────────────────────────────────────────────────
+
+export async function getMatricCounter(departmentId, level, token) {
+  const params = new URLSearchParams({ departmentId, level: level.toString() })
+  const response = await fetch(`${API_BASE_URL}/matric/counter?${params}`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch matric counter'))
+  return data
+}
+
+export async function generateMatricNumber({ departmentId, level, isTransfer, manualCounter }, token) {
+  const response = await fetch(`${API_BASE_URL}/matric/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ departmentId, level, isTransfer: isTransfer || false, manualCounter: manualCounter || null }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to generate matric number'))
   return data
 }
 

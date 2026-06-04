@@ -38,7 +38,7 @@ const LEVEL_OPTIONS = [
   { label: '100 – 600 (6 years)', min: 100, max: 600 },
 ]
 
-const blankForm = { name: '', facultyId: '', minLevel: 100, maxLevel: 400 }
+const blankForm = { name: '', facultyId: '', minLevel: 100, maxLevel: 400, abbreviation: '' }
 
 export default function Departments() {
   const { adminToken } = useAdminAuth()
@@ -89,18 +89,20 @@ export default function Departments() {
   const openEdit = (dept) => {
     setEditTarget(dept)
     setForm({
-      name:      dept.name,
-      facultyId: dept.faculty?._id || dept.facultyId || '',
-      minLevel:  dept.minLevel || 100,
-      maxLevel:  dept.maxLevel || 400,
+      name:         dept.name,
+      facultyId:    dept.faculty?._id || dept.facultyId || '',
+      minLevel:     dept.minLevel || 100,
+      maxLevel:     dept.maxLevel || 400,
+      abbreviation: dept.abbreviation || '',
     })
     setFormError('')
     setShowForm(true)
   }
 
   const handleSave = async () => {
-    if (!form.name.trim())    { setFormError('Department name is required'); return }
-    if (!form.facultyId)      { setFormError('Please select a faculty');     return }
+    if (!form.name.trim())       { setFormError('Department name is required'); return }
+    if (!form.facultyId)         { setFormError('Please select a faculty');     return }
+    if (!form.abbreviation.trim()) { setFormError('Department abbreviation is required (e.g., CSC)'); return }
     setSaving(true)
     setFormError('')
     try {
@@ -239,6 +241,22 @@ export default function Departments() {
                   <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2
                                                      text-slate-500 pointer-events-none" />
                 </div>
+              </div>
+
+              {/* Abbreviation */}
+              <div className="space-y-1">
+                <label className="text-xs text-slate-400 font-medium">Abbreviation <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={form.abbreviation}
+                  onChange={(e) => setForm({ ...form, abbreviation: e.target.value.toUpperCase() })}
+                  placeholder="e.g. CSC"
+                  maxLength={6}
+                  className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-600
+                             text-slate-200 placeholder:text-slate-600 text-sm uppercase
+                             focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <p className="text-xs text-slate-500">Used in matric numbers (e.g., CSC for Computer Science)</p>
               </div>
 
               {/* Level range */}

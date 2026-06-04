@@ -80,10 +80,10 @@ export default function GADashboard() {
     if (l.status === 'fulfilled') {
       const lVal = l.value
       setLogs(
+        Array.isArray(lVal?.data?.logs) ? lVal.data.logs :
         Array.isArray(lVal) ? lVal :
         Array.isArray(lVal?.data) ? lVal.data :
         Array.isArray(lVal?.logs) ? lVal.logs :
-        Array.isArray(lVal?.data?.logs) ? lVal.data.logs :
         []
       )
     }
@@ -185,10 +185,11 @@ export default function GADashboard() {
                         <span className="font-semibold text-white">
                           {ADMIN_TYPE_LABELS[log.adminType] || log.adminType} Admin
                         </span>
-                        {' '}{log.action}
-                        {log.targetName && (
-                          <span className="text-amber-400"> {log.targetName}</span>
+                        {log.adminUsername && (
+                          <span className="text-slate-500 text-xs ml-1">({log.adminUsername})</span>
                         )}
+                        {' — '}
+                        <span>{log.description}</span>
                       </p>
                       <p className="text-slate-600 text-xs mt-0.5">{timeAgo(log.createdAt)}</p>
                     </div>

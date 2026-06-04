@@ -38,10 +38,10 @@ export default function ActivityLogs() {
   getActivityLogs(adminToken)
     .then(data => {
       setLogs(
-        Array.isArray(data) ? data :
+        Array.isArray(data?.data?.logs) ? data.data.logs :
         Array.isArray(data?.data) ? data.data :
         Array.isArray(data?.logs) ? data.logs :
-        Array.isArray(data?.data?.logs) ? data.data.logs :
+        Array.isArray(data) ? data :
         []
       )
     })
@@ -140,18 +140,27 @@ export default function ActivityLogs() {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <p className="text-slate-300 text-sm leading-snug">
-                        <span className={`font-bold ${meta.color}`}>
+                        <span className={`font-bold ${meta.color}`}>  
                           {meta.label} Admin
                         </span>
                         {log.adminUsername && (
                           <span className="text-slate-500 text-xs ml-1">({log.adminUsername})</span>
                         )}
-                        {' '}<span>{log.action}</span>
-                        {log.targetName && (
-                          <span className="text-white font-semibold"> {log.targetName}</span>
-                        )}
+                        {' — '}
+                        <span className="text-slate-300">{log.description}</span>
                       </p>
-                      <p className="text-slate-600 text-xs mt-1">{timeAgo(log.createdAt)}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-slate-600 text-xs">{timeAgo(log.createdAt)}</p>
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 ${
+                          log.action === 'CREATE' ? 'text-emerald-400' :
+                          log.action === 'UPDATE' ? 'text-blue-400' :
+                          log.action === 'DELETE' ? 'text-red-400' :
+                          log.action === 'LOGIN'  ? 'text-amber-400' :
+                          'text-slate-400'       
+                        }`}>
+                          {log.action}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 )

@@ -5,6 +5,7 @@ import { TIMETABLE_NAV } from './Dashboard'
 import {
   getAllFaculties, getAllDepartments,
   getTimetableCourses, saveTimetableBulk,
+  getActiveSession,
 } from '../../../services/api'
 import {
   Calendar, Zap, AlertTriangle, CheckCircle2,
@@ -131,6 +132,7 @@ export default function GenerateTimetable() {
   const [courses,     setCourses]     = useState([])
   const [session,     setSession]     = useState('')
   const [semester,    setSemester]    = useState('')
+  const [activeSession, setActiveSession] = useState(null)
 
   const [loading,     setLoading]     = useState(false)
   const [generating,  setGenerating]  = useState(false)
@@ -148,11 +150,26 @@ export default function GenerateTimetable() {
 
   useEffect(() => {
     Promise.all([getAllFaculties(adminToken), getAllDepartments(adminToken)])
-      .then(([f, d]) => {  
-        const facList = Array.isArray(f) ? f : Array.isArray(f?.data) ? f.data : [] 
-        const depList = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : [] 
-        setFaculties(facList); 
+      .then(([f, d]) => {
+        const facList = Array.isArray(f) ? f : Array.isArray(f?.data) ? f.data : []
+        const depList = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : []
+        setFaculties(facList);
         setDepartments(depList)
+      })
+      .catch(() => {})
+  }, [adminToken])
+
+  // Fetch active session on mount
+  useEffect(() => {
+    getActiveSession(adminToken)
+      .then(res => {
+        const sessionData = res.data
+        if (sessionData) {
+          setActiveSession(sessionData)
+          // Auto-fill from active session
+          if (!session) setSession(sessionData.session)
+          if (!semester) setSemester(sessionData.semester)
+        }
       })
       .catch(() => {})
   }, [adminToken])

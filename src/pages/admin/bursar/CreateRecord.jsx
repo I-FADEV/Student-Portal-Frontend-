@@ -9,6 +9,7 @@ import {
   createFinanceBulk,
   getFaculties,
   getDepartments,
+  getActiveSession,
 } from '../../../services/api'
 import {
   TrendingUp, Plus, FileText, Wallet,
@@ -30,8 +31,10 @@ const PRESET_LABELS = [
   'Exam Fee', 'Sports Fee', 'Medical Fee', 'Development Levy',
 ]
 
-const SESSIONS  = ['2025/2026', '2024/2025', '2023/2024', '2022/2023']
-const SEMESTERS = ['First', 'Second']
+const CURRENCIES = [
+  { value: 'NGN', label: 'Naira (₦)', symbol: '₦' },
+  { value: 'XAF', label: 'CFA Franc (FCFA)', symbol: 'FCFA' },
+]
 
 // Generate level options from a department's minLevel → maxLevel in steps of 100
 function getLevelsForDept(dept) {
@@ -62,7 +65,7 @@ function ModeTab({ icon: Icon, label, desc, active, onClick }) {
 }
 
 // ─── Fee item row ─────────────────────────────────────────────────────────────
-function ItemRow({ item, index, onChange, onRemove, canRemove }) {
+function ItemRow({ item, index, onChange, onRemove, canRemove, currencySymbol = '₦' }) {
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-800/40 border border-slate-700/50 rounded-xl group">
       <div className="flex-1 min-w-0">
@@ -79,7 +82,7 @@ function ItemRow({ item, index, onChange, onRemove, canRemove }) {
         </datalist>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-slate-500 text-sm">₦</span>
+        <span className="text-slate-500 text-sm">{currencySymbol}</span>
         <input
           type="number"
           value={item.amount}
@@ -129,6 +132,10 @@ export default function CreateRecord() {
   const [loadingData,  setLoadingData]  = useState(true)
   const [dataError,    setDataError]    = useState(null)
 
+  // ── Active session ──
+  const [activeSession, setActiveSession] = useState(null)
+  const [sessionLoading, setSessionLoading] = useState(true)
+
   // ── Mode ──
   const [mode, setMode] = useState('single')
 
@@ -151,9 +158,8 @@ export default function CreateRecord() {
   const [previewing,    setPreviewing]    = useState(false)
   const [previewCount,  setPreviewCount]  = useState(null)
 
-  // ── Session / semester ──
-  const [session,  setSession]  = useState('')
-  const [semester, setSemester] = useState('')
+  // ── Currency ──
+  const [currency, setCurrency] = useState('NGN')
 
   // ── Items ──
   const [items, setItems] = useState([{ label: '', amount: '' }])
@@ -174,6 +180,15 @@ export default function CreateRecord() {
       })
       .catch(err => setDataError(err.message))
       .finally(() => setLoadingData(false))
+  }, [adminToken])
+
+  // ── Fetch active session on mount ──
+  useEffect(() => {
+    setSessionLoading(true)
+    getActiveSession(adminToken)
+      .then(res => setActiveSession(res.data || null))
+      .catch(err => console.error('Failed to fetch active session:', err))
+      .finally(() => setSessionLoading(false))
   }, [adminToken])
 
   // Derive the selected department object for level range
@@ -257,9 +272,8 @@ export default function CreateRecord() {
   const handleSubmit = async () => {
     setError(null)
     const itemErr = validateItems()
-    if (itemErr)   return setError(itemErr)
-    if (!session)  return setError('Please select a session.')
-    if (!semester) return setError('Please select a semester.')
+    if (itemErr) return setError(itemErr)
+    if (!activeSession) return setError('No active session. Please contact General Admin to create a session.')
 
     const cleanItems = items.map(it => ({
       label:  it.label.trim().toLowerCase() === 'id card' ? 'ID Card' : it.label.trim(),
@@ -270,10 +284,10 @@ export default function CreateRecord() {
     try {
       if (mode === 'single') {
         if (!selected) { setError('Please search and select a student.'); setSubmitting(false); return }
-        await createFinanceRecord({ studentId: selected._id, session, semester, items: cleanItems }, adminToken)
+        await createFinanceRecord({ studentId: selected._id, items: cleanItems, currency }, adminToken)
         setSuccess('single')
       } else {
-        const payload = { session, semester, items: cleanItems, target: mode }
+        const payload = { items: cleanItems, target: mode, currency }
 
         if (mode === 'department') {
           if (!targetDeptId) { setError('Please select a department.'); setSubmitting(false); return }
@@ -299,7 +313,7 @@ export default function CreateRecord() {
 
   const resetForm = () => {
     setSuccess(null); setMode('single'); setSelected(null); setQuery('')
-    setSession(''); setSemester(''); setItems([{ label: '', amount: '' }])
+    setCurrency('NGN'); setItems([{ label: '', amount: '' }])
     setTargetDeptId(''); setTargetLevel(''); setTargetFacId('')
     setPreviewCount(null); setError(null)
   }
@@ -568,19 +582,37 @@ export default function CreateRecord() {
           )}
         </div>
 
-        {/* ── STEP 3: Session + Semester ── */}
+        {/* ── STEP 3: Active Session ── */}
         <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">3. Session & Semester</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <SelectField value={session} onChange={setSession}>
-              <option value="">Select session</option>
-              {SESSIONS.map(s => <option key={s} value={s}>{s}</option>)}
-            </SelectField>
-            <SelectField value={semester} onChange={setSemester}>
-              <option value="">Select semester</option>
-              {SEMESTERS.map(s => <option key={s} value={s}>{s} Semester</option>)}
-            </SelectField>
-          </div>
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">3. Active Session</h2>
+          {sessionLoading ? (
+            <div className="flex items-center gap-2 text-slate-500 text-sm">
+              <Loader2 size={14} className="animate-spin" /> Loading session…
+            </div>
+          ) : !activeSession ? (
+            <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+              <AlertCircle size={16} className="flex-shrink-0" />
+              No active session. Please contact General Admin to create a session.
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
+              <div>
+                <p className="text-white font-bold text-sm">{activeSession.session}</p>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  {activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester · Controlled by General Admin
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ── STEP 3.5: Currency ── */}
+        <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6 space-y-4">
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">3.5. Currency</h2>
+          <SelectField value={currency} onChange={setCurrency}>
+            {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </SelectField>
         </div>
 
         {/* ── STEP 4: Fee items ── */}
@@ -599,6 +631,7 @@ export default function CreateRecord() {
                 onChange={updateItem}
                 onRemove={removeItem}
                 canRemove={items.length > 1}
+                currencySymbol={CURRENCIES.find(c => c.value === currency)?.symbol || '₦'}
               />
             ))}
           </div>
@@ -614,7 +647,7 @@ export default function CreateRecord() {
           {totalAmount > 0 && (
             <div className="flex items-center justify-between pt-3 border-t border-slate-800">
               <span className="text-slate-400 text-sm font-medium">Total per student</span>
-              <span className="text-white font-black text-lg">₦{totalAmount.toLocaleString()}</span>
+              <span className="text-white font-black text-lg">{CURRENCIES.find(c => c.value === currency)?.symbol || '₦'}{totalAmount.toLocaleString()}</span>
             </div>
           )}
         </div>

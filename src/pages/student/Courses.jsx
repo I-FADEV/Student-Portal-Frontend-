@@ -181,7 +181,7 @@ export default function Courses() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Course Outline</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Course Outline</h1>
         <p className="text-slate-400 text-sm mt-1">
           {!loading && allCourses.length > 0
             ? `${activeCourses.length} course${activeCourses.length !== 1 ? 's' : ''} — ${activeTab ? tabLabel(activeTab) : ''} Semester`

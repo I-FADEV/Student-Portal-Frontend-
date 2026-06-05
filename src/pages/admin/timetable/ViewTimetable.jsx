@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAdminAuth } from '../../../context/AdminAuthContext'
 import AdminLayout from '../../../components/shared/AdminLayout'
 import { TIMETABLE_NAV } from './Dashboard'
-import { getAllDepartments, getAdminTimetable, updateTimetableEntry, deleteTimetableEntry } from '../../../services/api'
+import { getAllDepartments, getAdminTimetable, updateTimetableEntry, deleteTimetableEntry, getActiveSession } from '../../../services/api'
 import {
   Grid3X3, Search, ChevronDown, RefreshCw, AlertCircle,
   Pencil, Trash2, Loader2, Check, X,
@@ -27,6 +27,7 @@ export default function ViewTimetable() {
   const [entries,     setEntries]     = useState([])
   const [loading,     setLoading]     = useState(false)
   const [error,       setError]       = useState(null)
+  const [activeSession, setActiveSession] = useState(null)
 
   // Filters
   const [session,    setSession]    = useState('')
@@ -50,6 +51,21 @@ export default function ViewTimetable() {
       .then(d => {
         const deptList = Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : []
         setDepartments(deptList)
+      })
+      .catch(() => {})
+  }, [adminToken])
+
+  // Fetch active session on mount
+  useEffect(() => {
+    getActiveSession(adminToken)
+      .then(res => {
+        const sessionData = res.data
+        if (sessionData) {
+          setActiveSession(sessionData)
+          // Auto-fill filters from active session
+          if (!session) setSession(sessionData.session)
+          if (!semester) setSemester(sessionData.semester)
+        }
       })
       .catch(() => {})
   }, [adminToken])

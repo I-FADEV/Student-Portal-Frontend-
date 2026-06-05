@@ -47,6 +47,9 @@ function itemStatusCls(status) {
 
 // ─── Payment Modal ────────────────────────────────────────────────────────────
 function PaymentModal({ record, onClose, onSuccess, adminToken }) {
+  const currency = record.currency || 'NGN'
+  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
+
   const [payments,   setPayments]   = useState(
     record.items.map(it => ({
       itemLabel:  it.label,
@@ -67,7 +70,7 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
     if (active.length === 0) return setError('Enter at least one payment amount.')
     for (const p of active) {
       if (parseFloat(p.amountPaid) > p.max)
-        return setError(`Payment for "${p.itemLabel}" exceeds the remaining balance of ₦${p.max.toLocaleString()}.`)
+        return setError(`Payment for "${p.itemLabel}" exceeds the remaining balance of ${currencySymbol}${p.max.toLocaleString()}.`)
     }
     setSubmitting(true)
     try {
@@ -104,19 +107,19 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
                   <p className="text-white text-sm font-semibold">{p.itemLabel}</p>
                   <div className="text-right">
                     <p className="text-slate-400 text-xs">
-                      Paid: <span className="text-white font-medium">₦{Number(p.paidAmount).toLocaleString()}</span> / ₦{Number(p.total).toLocaleString()}
+                      Paid: <span className="text-white font-medium">{currencySymbol}{Number(p.paidAmount).toLocaleString()}</span> / {currencySymbol}{Number(p.total).toLocaleString()}
                     </p>
-                    {remaining > 0 && <p className="text-amber-400 text-xs">Remaining: ₦{Number(remaining).toLocaleString()}</p>}
+                    {remaining > 0 && <p className="text-amber-400 text-xs">Remaining: {currencySymbol}{Number(remaining).toLocaleString()}</p>}
                   </div>
                 </div>
                 {remaining > 0 ? (
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg focus-within:border-amber-500/50 transition-colors">
-                    <span className="text-slate-500 text-sm">₦</span>
+                    <span className="text-slate-500 text-sm">{currencySymbol}</span>
                     <input
                       type="number"
                       value={p.amountPaid}
                       onChange={e => update(i, e.target.value)}
-                      placeholder={`Max ₦${Number(remaining).toLocaleString()}`}
+                      placeholder={`Max ${currencySymbol}${Number(remaining).toLocaleString()}`}
                       min="0"
                       max={remaining}
                       className="flex-1 bg-transparent text-white text-sm placeholder-slate-600 outline-none"
@@ -159,6 +162,9 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
 
 // ─── Add Item Modal ───────────────────────────────────────────────────────────
 function AddItemModal({ record, onClose, onSuccess, adminToken }) {
+  const currency = record.currency || 'NGN'
+  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
+
   const [label,      setLabel]      = useState('')
   const [amount,     setAmount]     = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -220,7 +226,7 @@ function AddItemModal({ record, onClose, onSuccess, adminToken }) {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Amount</label>
             <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus-within:border-amber-500/50 transition-colors">
-              <span className="text-slate-500 text-sm">₦</span>
+              <span className="text-slate-500 text-sm">{currencySymbol}</span>
               <input
                 type="number"
                 value={amount}
@@ -259,6 +265,8 @@ function AddItemModal({ record, onClose, onSuccess, adminToken }) {
 
 // ─── Record Detail Panel ──────────────────────────────────────────────────────
 function DetailPanel({ record, onClose, onPay, onAddItem }) {
+  const currency = record.currency || 'NGN'
+  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
   const meta = statusMeta(record.paymentStatus)
   const Icon = meta.icon
 
@@ -288,9 +296,9 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
         {/* Totals */}
         <div className="grid grid-cols-3 divide-x divide-slate-800 border-b border-slate-800 flex-shrink-0">
           {[
-            ['Total',       `₦${Number(record.totalAmount).toLocaleString()}`,        'text-white'],
-            ['Paid',        `₦${Number(record.totalPaid).toLocaleString()}`,          'text-emerald-400'],
-            ['Outstanding', `₦${Number(record.outstandingBalance).toLocaleString()}`, record.outstandingBalance > 0 ? 'text-red-400' : 'text-emerald-400'],
+            ['Total',       `${currencySymbol}${Number(record.totalAmount).toLocaleString()}`,        'text-white'],
+            ['Paid',        `${currencySymbol}${Number(record.totalPaid).toLocaleString()}`,          'text-emerald-400'],
+            ['Outstanding', `${currencySymbol}${Number(record.outstandingBalance).toLocaleString()}`, record.outstandingBalance > 0 ? 'text-red-400' : 'text-emerald-400'],
           ].map(([label, value, cls]) => (
             <div key={label} className="px-4 py-3 text-center">
               <p className={`text-base font-black ${cls}`}>{value}</p>
@@ -303,7 +311,7 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
         {record.carriedOverBalance > 0 && (
           <div className="mx-5 mt-4 px-3 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl flex-shrink-0">
             <p className="text-amber-400 text-xs font-medium">
-              ⚠ Carried over from previous session: ₦{Number(record.carriedOverBalance).toLocaleString()}
+              ⚠ Carried over from previous session: {currencySymbol}{Number(record.carriedOverBalance).toLocaleString()}
             </p>
           </div>
         )}
@@ -320,7 +328,7 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
                   <span className={`text-xs font-bold ${itemStatusCls(item.status)}`}>{item.status}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>₦{Number(item.paidAmount).toLocaleString()} paid of ₦{Number(item.amount).toLocaleString()}</span>
+                  <span>{currencySymbol}{Number(item.paidAmount).toLocaleString()} paid of {currencySymbol}{Number(item.amount).toLocaleString()}</span>
                   <span>{pct}%</span>
                 </div>
                 <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -520,6 +528,8 @@ export default function ManageRecords() {
                 {filtered.map(rec => {
                   const meta = statusMeta(rec.paymentStatus)
                   const Icon = meta.icon
+                  const currency = rec.currency || 'NGN'
+                  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
                   return (
                     <div
                       key={rec._id}
@@ -531,8 +541,8 @@ export default function ManageRecords() {
                         <p className="text-slate-500 text-xs">{rec.student?.matricNumber}</p>
                       </div>
                       <p className="text-slate-300 text-sm">{rec.session} <span className="text-slate-600">·</span> {rec.semester}</p>
-                      <p className="text-white text-sm font-bold">₦{Number(rec.totalAmount).toLocaleString()}</p>
-                      <p className="text-emerald-400 text-sm font-semibold">₦{Number(rec.totalPaid).toLocaleString()}</p>
+                      <p className="text-white text-sm font-bold">{currencySymbol}{Number(rec.totalAmount).toLocaleString()}</p>
+                      <p className="text-emerald-400 text-sm font-semibold">{currencySymbol}{Number(rec.totalPaid).toLocaleString()}</p>
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border w-fit ${meta.cls}`}>
                         <Icon size={10} />{meta.label}
                       </span>

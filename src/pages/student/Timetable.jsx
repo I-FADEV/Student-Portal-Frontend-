@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { getStudentTimetable, getStudentProfile } from '../../services/api'
+import { getStudentTimetable, getStudentProfile, getActiveSession } from '../../services/api'
 import { Calendar, Download, AlertCircle, Coffee } from 'lucide-react'
 
 // ─── Fixed time slots (must match backend enum exactly) ──────────────────────
@@ -123,12 +123,14 @@ export default function Timetable() {
   const [profile,   setProfile]   = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
+  const [activeSession, setActiveSession] = useState(null)
 
   useEffect(() => {
     Promise.allSettled([
       getStudentTimetable(token),
       getStudentProfile(token),
-    ]).then(([t, p]) => {
+      getActiveSession(token),
+    ]).then(([t, p, s]) => {
       if (t.status === 'fulfilled') {
         const raw = t.value
         setTimetable(Array.isArray(raw) ? raw : raw?.data || [])
@@ -136,6 +138,7 @@ export default function Timetable() {
         setError(t.reason?.message)
       }
       if (p.status === 'fulfilled') setProfile(p.value?.data || p.value)
+      if (s.status === 'fulfilled') setActiveSession(s.value?.data || null)
     }).finally(() => setLoading(false))
   }, [token])
 
@@ -150,6 +153,11 @@ export default function Timetable() {
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Timetable</h1>
           <p className="text-slate-500 text-sm mt-1">Your weekly class schedule</p>
+          {activeSession && (
+            <p className="text-slate-400 text-xs mt-1">
+              {activeSession.session} · {activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester
+            </p>
+          )}
         </div>
         {!loading && !isEmpty && (
           <button

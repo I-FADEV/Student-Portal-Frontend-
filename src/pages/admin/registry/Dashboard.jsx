@@ -60,10 +60,10 @@ export default function RegistryDashboard() {
       getMatricStats(adminToken),
     ]).then(([registryResult, matricResult]) => {
       if (registryResult.status === 'fulfilled') {
-        setStats(registryResult.value)
+        setStats(registryResult.value?.data)
       }
       if (matricResult.status === 'fulfilled') {
-        setMatricStats(matricResult.value)
+        setMatricStats(matricResult.value?.data)
       }
     }).catch((err) => setError(err.message))
       .finally(() => setLoading(false))

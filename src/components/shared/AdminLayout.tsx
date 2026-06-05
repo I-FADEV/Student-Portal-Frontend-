@@ -3,28 +3,49 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import { Menu, X, LogOut, ChevronRight } from 'lucide-react'
 
-function LogoMark() {
+function LogoFull({ size = 'md' }: { size?: 'sm' | 'md' }) {
+  const imgClass   = size === 'sm' ? 'h-8 w-auto'  : 'h-10 w-auto'
+  const titleClass = size === 'sm' ? 'text-base'    : 'text-lg'
+
   return (
     <div className="flex items-center gap-3 min-w-0">
-      <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-900/40">
-        <span className="text-slate-950 font-black text-xs tracking-tight">IF</span>
+      <img
+        src="/logo.png"
+        alt="IFATOSS logo"
+        className={`${imgClass} object-contain flex-shrink-0`}
+        onError={(e) => {
+          const target = e.currentTarget as HTMLImageElement
+          target.style.display = 'none'
+          const next = target.nextElementSibling as HTMLElement
+          if (next) next.style.display = 'flex'
+        }}
+      />
+      <div
+        className="hidden flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 items-center justify-center shadow-lg shadow-blue-500/30"
+        aria-hidden="true"
+      >
+        <span className="text-white font-extrabold text-sm tracking-tight">IF</span>
       </div>
       <div className="flex flex-col leading-tight min-w-0">
-        <span className="text-white font-black text-sm tracking-widest truncate">IFATOSS</span>
-        <span className="text-slate-500 text-[10px] font-medium tracking-wide truncate">Admin Portal</span>
+        <span className={`text-white font-extrabold ${titleClass} tracking-widest truncate`}>
+          IFATOSS
+        </span>
+        <span className="text-slate-400 text-[11px] font-medium tracking-wide truncate">
+          Admin Portal
+        </span>
       </div>
     </div>
   )
 }
 
-export default function AdminLayout({ children, navItems }) {
+export default function AdminLayout({ children, navItems }: { children: React.ReactNode, navItems: any[] }) {
   const [open, setOpen] = useState(false)
   const { adminUser, logout } = useAdminAuth()
   const navigate  = useNavigate()
   const location  = useLocation()
 
   const handleLogout = () => { logout(); navigate('/admin/login') }
-  const go = (path) => { navigate(path); setOpen(false) }
+  const go = (path: string) => { navigate(path); setOpen(false) }
 
   const initial = (adminUser?.title || 'A').charAt(0).toUpperCase()
 
@@ -47,7 +68,7 @@ export default function AdminLayout({ children, navItems }) {
 
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5 border-b border-slate-800/60">
-          <LogoMark />
+          <LogoFull />
           <button onClick={() => setOpen(false)} className="lg:hidden w-7 h-7 flex items-center justify-center rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-colors">
             <X size={16} />
           </button>
@@ -64,7 +85,7 @@ export default function AdminLayout({ children, navItems }) {
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems.map((item: any) => {
             const isActive = location.pathname === item.path
             const Icon = item.icon
             return (
@@ -117,7 +138,7 @@ export default function AdminLayout({ children, navItems }) {
         >
           <Menu size={20} />
         </button>
-        <LogoMark />
+        <LogoFull size="sm" />
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-bold text-slate-950 text-xs">
           {initial}
         </div>

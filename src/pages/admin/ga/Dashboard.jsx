@@ -2,20 +2,22 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAdminAuth } from '../../../context/AdminAuthContext'
 import AdminLayout from '../../../components/shared/AdminLayout'
-import { getAllAdmins, getActivityLogs } from '../../../services/api'
+import { getAllAdmins, getActivityLogs, getActiveSession } from '../../../services/api'
 import {
   LayoutDashboard, Users, PlusCircle,
   ScrollText, KeyRound, ShieldCheck,
-  Clock, ArrowRight,
+  Clock, ArrowRight, CalendarClock,
+  CheckCircle2, AlertCircle, Loader2,
 } from 'lucide-react'
 
 // ── Sidebar nav items for GA ──────────────────────────────────────────────────
 export const GA_NAV = [
-  { label: 'Dashboard',     path: '/admin/ga',              icon: LayoutDashboard },
-  { label: 'Create Admin',  path: '/admin/ga/create',       icon: PlusCircle },
-  { label: 'Manage Admins', path: '/admin/ga/admins',       icon: Users },
-  { label: 'Activity Logs', path: '/admin/ga/logs',         icon: ScrollText },
-  { label: 'Change Password', path: '/admin/ga/password',   icon: KeyRound },
+  { label: 'Dashboard',       path: '/admin/ga',              icon: LayoutDashboard },
+  { label: 'Session Control', path: '/admin/ga/session',      icon: CalendarClock },
+  { label: 'Create Admin',    path: '/admin/ga/create',       icon: PlusCircle },
+  { label: 'Manage Admins',   path: '/admin/ga/admins',       icon: Users },
+  { label: 'Activity Logs',   path: '/admin/ga/logs',         icon: ScrollText },
+  { label: 'Change Password', path: '/admin/ga/password',     icon: KeyRound },
 ]
 
 const ADMIN_TYPE_LABELS = {
@@ -62,12 +64,14 @@ export default function GADashboard() {
   const [admins,  setAdmins]  = useState([])
   const [logs,    setLogs]    = useState([])
   const [loading, setLoading] = useState(true)
+  const [activeSession, setActiveSession] = useState(null)
 
   useEffect(() => {
-  Promise.allSettled([
-    getAllAdmins(adminToken),
-    getActivityLogs(adminToken, { limit: 5 }),
-  ]).then(([a, l]) => {
+    Promise.allSettled([
+      getAllAdmins(adminToken),
+      getActivityLogs(adminToken, { limit: 5 }),
+      getActiveSession(adminToken),
+    ]).then(([a, l, s]) => {
     if (a.status === 'fulfilled') {
       const aVal = a.value
       setAdmins(
@@ -86,6 +90,9 @@ export default function GADashboard() {
         Array.isArray(lVal?.logs) ? lVal.logs :
         []
       )
+    }
+    if (s.status === 'fulfilled') {
+      setActiveSession(s.value?.data || null)
     }
   }).finally(() => setLoading(false))
 }, [adminToken])
@@ -113,6 +120,36 @@ export default function GADashboard() {
           <h1 className="text-2xl font-black text-white tracking-tight">General Admin</h1>
           <p className="text-slate-500 text-sm mt-1">System overview and admin management</p>
         </div>
+
+        {/* Active Session Widget */}
+        {!loading && (
+          <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${activeSession ? 'bg-emerald-500/10' : 'bg-slate-800'}`}>
+                  {activeSession ? <CheckCircle2 size={20} className="text-emerald-400" /> : <AlertCircle size={20} className="text-slate-500" />}
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm">
+                    {activeSession ? activeSession.session : 'No Active Session'}
+                  </p>
+                  <p className="text-slate-500 text-xs mt-0.5">
+                    {activeSession
+                      ? `${activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester · Started ${new Date(activeSession.startedAt).toLocaleDateString()}`
+                      : 'Create a session to begin the academic year'
+                    }
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate('/admin/ga/session')}
+                className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 text-sm font-semibold hover:bg-slate-700 hover:text-white transition-colors"
+              >
+                {activeSession ? 'Manage' : 'Create Session'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">

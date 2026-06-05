@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { getStudentIDCard, getStudentProfile, submitIDCard } from '../../services/api'
+import { getStudentIDCard, getStudentProfile, getStudentFinances, submitIDCard } from '../../services/api'
 import {
   CreditCard,
   Upload,
@@ -297,21 +297,32 @@ export default function IDCard() {
   })
 
   useEffect(() => {
-    Promise.allSettled([getStudentIDCard(token), getStudentProfile(token)])
-      .then(([c, p]) => {
+    Promise.allSettled([getStudentIDCard(token), getStudentProfile(token), getStudentFinances(token)])
+      .then(([c, p, f]) => {
+        let prof = null
+        let financeRecord = null
+
         if (c.status === 'fulfilled') {
           const idCardData = c.value?.data || c.value
           setIdCard(idCardData)
         }
         if (p.status === 'fulfilled') {
-          const prof = p.value?.data || p.value
+          prof = p.value?.data || p.value
           setProfile(prof)
+        }
+        if (f.status === 'fulfilled') {
+          const financeData = f.value?.data || f.value
+          financeRecord = Array.isArray(financeData) ? financeData[0] : financeData
+        }
+
+        // Set form data after all data is available
+        if (prof || financeRecord) {
           setFormData(prev => ({
             ...prev,
-            matricNumber: prof.matricNumber || '',
-            department: prof.department || '',
-            level: prof.level ? String(prof.level) : '',
-            session: prof.currentSession || prof.session || '',
+            matricNumber: prof?.matricNumber || '',
+            department: prof?.department || '',
+            level: prof?.level ? String(prof.level) : '',
+            session: financeRecord?.session || prof?.currentSession || prof?.session || '',
           }))
         }
       })

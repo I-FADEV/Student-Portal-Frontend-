@@ -16,6 +16,7 @@ import AdminProtectedRoute from './routes/AdminProtectedRoute'
 
 // GA pages
 import GADashboard    from './pages/admin/ga/Dashboard'
+import ManageSession  from './pages/admin/ga/ManageSession'
 import CreateAdmin    from './pages/admin/ga/CreateAdmin'
 import ManageAdmins   from './pages/admin/ga/ManageAdmins'
 import ActivityLogs   from './pages/admin/ga/ActivityLogs'
@@ -121,6 +122,14 @@ export default function App() {
         element={
           <AdminProtectedRoute allowedRoles={['ga']}>
             <GADashboard />
+          </AdminProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/ga/session"
+        element={
+          <AdminProtectedRoute allowedRoles={['ga']}>
+            <ManageSession />
           </AdminProtectedRoute>
         }
       />

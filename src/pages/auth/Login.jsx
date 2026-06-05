@@ -2,7 +2,7 @@ import styles from './Login.module.css'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { studentLogin } from '../../services/api'
+import { studentLogin, getStudentProfile } from '../../services/api'
 
 function Login() {
   const [password, setPassword] = useState('')
@@ -21,7 +21,18 @@ function Login() {
 
     try {
       const { user, token } = await studentLogin(matricNo, password)
-      login(user, token)
+      // Fetch profile to get student name
+      const profile = await getStudentProfile(token)
+      const profileData = profile?.data || profile
+      // Merge profile data with user object
+      const userWithProfile = {
+        ...user,
+        name: profileData?.name || '',
+        matricNumber: profileData?.matricNumber || '',
+        department: profileData?.department || '',
+        level: profileData?.level || '',
+      }
+      login(userWithProfile, token)
       navigate('/dashboard')
     } catch (err) {
       setError(err.message || 'Invalid matric number or password')

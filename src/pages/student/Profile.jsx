@@ -29,7 +29,10 @@ export default function Profile() {
 
   useEffect(() => {
     getStudentProfile(token)
-      .then(setProfile)
+      .then((response) => {
+        const profileData = response?.data || response
+        setProfile(profileData)
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false))
   }, [token])

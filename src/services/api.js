@@ -184,9 +184,14 @@ export async function getAllAdmins(token) {
          []
 }
 
-export async function getActivityLogs(token, { limit } = {}) {
-  const params = limit ? `?limit=${limit}` : ''
-  const response = await fetch(`${API_BASE_URL}/admin/logs${params}`, {
+export async function getActivityLogs(token, { limit, page, startDate, endDate } = {}) {
+  const params = new URLSearchParams()
+  if (limit) params.append('limit', limit)
+  if (page) params.append('page', page)
+  if (startDate) params.append('startDate', startDate)
+  if (endDate) params.append('endDate', endDate)
+  const queryString = params.toString()
+  const response = await fetch(`${API_BASE_URL}/admin/logs${queryString ? `?${queryString}` : ''}`, {
     headers: { Authorization: `Bearer ${token}` },
   })
   const data = await response.json()
@@ -773,6 +778,59 @@ export async function searchStudents(query, token) {
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to search students'))
   return data
 }
+
+// ========== SESSION CONTROL (GA only) ==========
+
+export async function getActiveSession(token) {
+  const response = await fetch(`${API_BASE_URL}/session/active`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch active session'))
+  return data
+}
+
+export async function createSession({ session, startNow, startDate }, token) {
+  const response = await fetch(`${API_BASE_URL}/session/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ session, startNow, startDate }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to create session'))
+  return data
+}
+
+export async function endCurrentPhase(token) {
+  const response = await fetch(`${API_BASE_URL}/session/end-current-phase`, {
+    method: 'PATCH',
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to end current phase'))
+  return data
+}
+
+export async function startNextPhase({ phase, startNow, startDate }, token) {
+  const response = await fetch(`${API_BASE_URL}/session/start-${phase}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify({ startNow, startDate }),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, `Failed to start ${phase}`))
+  return data
+}
+
+export async function getSessionHistory(token) {
+  const response = await fetch(`${API_BASE_URL}/session/history`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch session history'))
+  return data
+}
+
 // Aliases — pages import these names
 export const getBursarStats         = getFinanceStats
 export const getBursarRecentRecords = getFinanceRecentRecords

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
-import { getStudentResults } from '../../services/api'
+import { getStudentResults, getActiveSession } from '../../services/api'
 import { TrendingUp, BookOpen, AlertCircle, ChevronDown, ChevronUp, Award } from 'lucide-react'
 
 // ─── Grade system ────────────────────────────────────────────────────────────
@@ -139,12 +139,20 @@ export default function Results() {
   const [results,   setResults]  = useState([])
   const [loading,   setLoading]  = useState(true)
   const [error,     setError]    = useState(null)
+  const [activeSession, setActiveSession] = useState(null)
 
   useEffect(() => {
-    getStudentResults(token)
-      .then((data) => setResults(Array.isArray(data) ? data : data?.results || []))
-      .catch((err) => setError(err.message === 'NOT_READY' ? 'NOT_READY' : err.message))
-      .finally(() => setLoading(false))
+    Promise.allSettled([
+      getStudentResults(token),
+      getActiveSession(token),
+    ]).then(([r, s]) => {
+      if (r.status === 'fulfilled') {
+        setResults(Array.isArray(r.value) ? r.value : r.value?.results || [])
+      } else {
+        setError(r.reason?.message === 'NOT_READY' ? 'NOT_READY' : r.reason?.message)
+      }
+      if (s.status === 'fulfilled') setActiveSession(s.value?.data || null)
+    }).finally(() => setLoading(false))
   }, [token])
 
   // Group by "session – semester"
@@ -166,6 +174,11 @@ export default function Results() {
       <div>
         <h1 className="text-2xl font-bold text-slate-800">My Results</h1>
         <p className="text-slate-500 text-sm mt-1">Academic performance across all sessions</p>
+        {activeSession && (
+          <p className="text-slate-400 text-xs mt-1">
+            Current: {activeSession.session} · {activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester
+          </p>
+        )}
       </div>
 
       {/* Coming soon */}

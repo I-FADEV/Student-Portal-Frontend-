@@ -5,6 +5,7 @@ import { TIMETABLE_NAV } from './Dashboard'
 import {
   getTimetableCourses, getResultsByCourse,
   saveResultsBulk, getResultsByStudent, updateResult,
+  getActiveSession,
 } from '../../../services/api'
 import {
   BarChart2, Upload, Users, Search, ChevronDown,
@@ -80,6 +81,7 @@ export default function Results() {
   const [session,    setSession]    = useState('')
   const [semester,   setSemester]   = useState('')
   const [activeTab,  setActiveTab]  = useState('course') // 'course' | 'student'
+  const [activeSession, setActiveSession] = useState(null)
 
   // ── By Course ──────────────────────────────────────────────────────────────
   const [courses,      setCourses]      = useState([])
@@ -99,6 +101,21 @@ export default function Results() {
   const [saveErr,      setSaveErr]      = useState(null)
 
   const fileRef = useRef()
+
+  // Fetch active session on mount
+  useEffect(() => {
+    getActiveSession(adminToken)
+      .then(res => {
+        const sessionData = res.data
+        if (sessionData) {
+          setActiveSession(sessionData)
+          // Auto-fill filters from active session
+          if (!session) setSession(sessionData.session)
+          if (!semester) setSemester(sessionData.semester)
+        }
+      })
+      .catch(() => {})
+  }, [adminToken])
 
   // ── By Student ─────────────────────────────────────────────────────────────
   const [studentQuery, setStudentQuery] = useState('')

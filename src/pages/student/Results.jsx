@@ -147,7 +147,7 @@ export default function Results() {
       getActiveSession(token),
     ]).then(([r, s]) => {
       if (r.status === 'fulfilled') {
-        setResults(Array.isArray(r.value) ? r.value : r.value?.results || [])
+        setResults(Array.isArray(r.value) ? r.value : r.value?.data || r.value?.results || [])
       } else {
         setError(r.reason?.message === 'NOT_READY' ? 'NOT_READY' : r.reason?.message)
       }

@@ -24,9 +24,13 @@ const NAV_ITEMS = [
   { label: 'Change Password', path: '/admin/bursar/change-password',icon: Wallet },
 ]
 
-function StatCard({ label, value, icon: Icon, color, loading }) {
+function StatCard({ label, value, icon: Icon, color, loading, currency = 'NGN', onClick, showCurrencyToggle = false }) {
+  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
   return (
-    <div className="relative overflow-hidden bg-slate-900 border border-slate-800/60 rounded-2xl p-5">
+    <div
+      className={`relative overflow-hidden bg-slate-900 border border-slate-800/60 rounded-2xl p-5 ${onClick ? 'cursor-pointer hover:border-slate-700 transition-colors' : ''}`}
+      onClick={onClick}
+    >
       <div className={`absolute -top-4 -right-4 w-20 h-20 rounded-full opacity-10 ${color}`} />
       <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${color} bg-opacity-20`}>
         <Icon size={18} className="text-white" />
@@ -37,6 +41,9 @@ function StatCard({ label, value, icon: Icon, color, loading }) {
         <p className="text-2xl font-black text-white mb-1">{value ?? '—'}</p>
       )}
       <p className="text-slate-500 text-xs font-medium">{label}</p>
+      {showCurrencyToggle && (
+        <p className="text-amber-400 text-[10px] mt-1 font-medium">Click to toggle currency</p>
+      )}
     </div>
   )
 }
@@ -56,6 +63,9 @@ export default function FinanceDashboard() {
   const [stats,   setStats]   = useState(null)
   const [recent,  setRecent]  = useState([])
   const [loading, setLoading] = useState(true)
+  const [feesCreatedCurrency, setFeesCreatedCurrency] = useState('NGN')
+  const [collectedCurrency, setCollectedCurrency] = useState('NGN')
+  const [outstandingCurrency, setOutstandingCurrency] = useState('NGN')
 
   useEffect(() => {
     Promise.allSettled([
@@ -67,11 +77,87 @@ export default function FinanceDashboard() {
     }).finally(() => setLoading(false))
   }, [adminToken])
 
+  const toggleFeesCreatedCurrency = () => {
+    setFeesCreatedCurrency(prev => prev === 'NGN' ? 'XAF' : 'NGN')
+  }
+
+  const toggleCollectedCurrency = () => {
+    setCollectedCurrency(prev => prev === 'NGN' ? 'XAF' : 'NGN')
+  }
+
+  const toggleOutstandingCurrency = () => {
+    setOutstandingCurrency(prev => prev === 'NGN' ? 'XAF' : 'NGN')
+  }
+
+  // Calculate totals by currency from recent records (fallback if backend doesn't provide breakdown)
+  const calculateByCurrency = (currency, field) => {
+    if (!recent || recent.length === 0) return 0
+    return recent.reduce((total, rec) => {
+      const recCurrency = rec.currency || 'NGN'
+      if (recCurrency === currency) {
+        return total + (rec[field] || 0)
+      }
+      return total
+    }, 0)
+  }
+
+  // Use backend-provided breakdown if available, otherwise calculate from recent records
+  // If backend returns 0 for breakdown fields, use the fallback calculation
+  const feesCreatedNGN = (stats?.totalFeesCreatedNGN ?? 0) > 0 ? stats.totalFeesCreatedNGN : calculateByCurrency('NGN', 'totalAmount')
+  const feesCreatedXAF = (stats?.totalFeesCreatedXAF ?? 0) > 0 ? stats.totalFeesCreatedXAF : calculateByCurrency('XAF', 'totalAmount')
+  const collectedNGN = (stats?.totalCollectedNGN ?? 0) > 0 ? stats.totalCollectedNGN : calculateByCurrency('NGN', 'totalPaid')
+  const collectedXAF = (stats?.totalCollectedXAF ?? 0) > 0 ? stats.totalCollectedXAF : calculateByCurrency('XAF', 'totalPaid')
+
+  // Calculate outstanding as fees created minus collected
+  const outstandingNGN = (stats?.totalOutstandingNGN ?? 0) > 0 ? stats.totalOutstandingNGN : feesCreatedNGN - collectedNGN
+  const outstandingXAF = (stats?.totalOutstandingXAF ?? 0) > 0 ? stats.totalOutstandingXAF : feesCreatedXAF - collectedXAF
+
+  const currentFeesCreated = feesCreatedCurrency === 'NGN' ? feesCreatedNGN : feesCreatedXAF
+  const currentCollected = collectedCurrency === 'NGN' ? collectedNGN : collectedXAF
+  const currentOutstanding = outstandingCurrency === 'NGN' ? outstandingNGN : outstandingXAF
+
+  const feesCreatedSymbol = feesCreatedCurrency === 'XAF' ? 'FCFA' : '₦'
+  const collectedSymbol = collectedCurrency === 'XAF' ? 'FCFA' : '₦'
+  const outstandingSymbol = outstandingCurrency === 'XAF' ? 'FCFA' : '₦'
+
+  // Format large numbers with K, M, B suffixes
+  const formatLargeNumber = (num) => {
+    if (num == null) return null
+    if (num >= 1000000000) return `${(num / 1000000000).toFixed(1)}B`
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`
+    return num.toLocaleString()
+  }
+
   const cards = [
     { label: 'Total Students',     value: stats?.totalStudents,     icon: Users,          color: 'bg-blue-500' },
-    { label: 'Total Fees Created', value: stats?.totalFeesCreated != null ? `₦${Number(stats.totalFeesCreated).toLocaleString()}` : null, icon: Wallet, color: 'bg-amber-500' },
-    { label: 'Total Collected',    value: stats?.totalCollected    != null ? `₦${Number(stats.totalCollected).toLocaleString()}` : null,   icon: TrendingUp, color: 'bg-emerald-500' },
-    { label: 'Total Outstanding',  value: stats?.totalOutstanding  != null ? `₦${Number(stats.totalOutstanding).toLocaleString()}` : null,  icon: AlertTriangle, color: 'bg-red-500' },
+    {
+      label: 'Total Fees Created',
+      value: currentFeesCreated != null ? `${feesCreatedSymbol}${formatLargeNumber(currentFeesCreated)}` : null,
+      icon: Wallet,
+      color: 'bg-amber-500',
+      currency: feesCreatedCurrency,
+      onClick: toggleFeesCreatedCurrency,
+      showCurrencyToggle: true
+    },
+    {
+      label: 'Total Collected',
+      value: currentCollected != null ? `${collectedSymbol}${formatLargeNumber(currentCollected)}` : null,
+      icon: TrendingUp,
+      color: 'bg-emerald-500',
+      currency: collectedCurrency,
+      onClick: toggleCollectedCurrency,
+      showCurrencyToggle: true
+    },
+    {
+      label: 'Total Outstanding',
+      value: currentOutstanding != null ? `${outstandingSymbol}${formatLargeNumber(currentOutstanding)}` : null,
+      icon: AlertTriangle,
+      color: 'bg-red-500',
+      currency: outstandingCurrency,
+      onClick: toggleOutstandingCurrency,
+      showCurrencyToggle: true
+    },
   ]
 
   return (
@@ -146,6 +232,8 @@ export default function FinanceDashboard() {
                 {recent.slice(0, 6).map((rec) => {
                   const meta = statusMeta(rec.paymentStatus)
                   const Icon = meta.icon
+                  const currency = rec.currency || 'NGN'
+                  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
                   return (
                     <div key={rec._id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-800/30 transition-colors">
                       <div className="flex-1 min-w-0">
@@ -157,7 +245,7 @@ export default function FinanceDashboard() {
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-white text-sm font-bold">₦{Number(rec.totalAmount).toLocaleString()}</p>
+                        <p className="text-white text-sm font-bold">{currencySymbol}{Number(rec.totalAmount).toLocaleString()}</p>
                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border mt-1 ${meta.color}`}>
                           <Icon size={9} />
                           {meta.label}

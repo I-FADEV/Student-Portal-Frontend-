@@ -65,7 +65,10 @@ function ModeTab({ icon: Icon, label, desc, active, onClick }) {
 }
 
 // ─── Fee item row ─────────────────────────────────────────────────────────────
-function ItemRow({ item, index, onChange, onRemove, canRemove, currencySymbol = '₦' }) {
+function ItemRow({ item, index, onChange, onRemove, canRemove, currencies = CURRENCIES }) {
+  const itemCurrency = item.currency || 'NGN'
+  const currencySymbol = currencies.find(c => c.value === itemCurrency)?.symbol || '₦'
+
   return (
     <div className="flex items-center gap-3 p-3 bg-slate-800/40 border border-slate-700/50 rounded-xl group">
       <div className="flex-1 min-w-0">
@@ -82,7 +85,15 @@ function ItemRow({ item, index, onChange, onRemove, canRemove, currencySymbol = 
         </datalist>
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0">
-        <span className="text-slate-500 text-sm">{currencySymbol}</span>
+        <select
+          value={itemCurrency}
+          onChange={e => onChange(index, 'currency', e.target.value)}
+          className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-amber-500/50 transition-colors"
+        >
+          {currencies.map(c => (
+            <option key={c.value} value={c.value}>{c.symbol}</option>
+          ))}
+        </select>
         <input
           type="number"
           value={item.amount}
@@ -249,6 +260,7 @@ export default function CreateRecord() {
       if (mode === 'faculty') {
         const fac = faculties.find(f => f._id === targetFacId)
         if (fac) params.faculty = fac.name
+        if (targetLevel) params.level = targetLevel
       }
       const res = await getStudentsByFilter(params, adminToken)
       setPreviewCount(res?.data?.length ?? 0)
@@ -258,8 +270,18 @@ export default function CreateRecord() {
 
   // ── Items helpers ──
   const updateItem  = (i, field, val) => setItems(prev => prev.map((it, idx) => idx === i ? { ...it, [field]: val } : it))
-  const addItem     = () => setItems(prev => [...prev, { label: '', amount: '' }])
+  const addItem     = () => setItems(prev => [...prev, { label: '', amount: '', currency: 'NGN' }])
   const removeItem  = (i) => setItems(prev => prev.filter((_, idx) => idx !== i))
+
+  // Calculate totals by currency
+  const totalsByCurrency = items.reduce((acc, it) => {
+    const curr = it.currency || 'NGN'
+    const amount = parseFloat(it.amount) || 0
+    if (!acc[curr]) acc[curr] = 0
+    acc[curr] += amount
+    return acc
+  }, {})
+
   const totalAmount = items.reduce((sum, it) => sum + (parseFloat(it.amount) || 0), 0)
 
   const validateItems = () => {
@@ -278,16 +300,17 @@ export default function CreateRecord() {
     const cleanItems = items.map(it => ({
       label:  it.label.trim().toLowerCase() === 'id card' ? 'ID Card' : it.label.trim(),
       amount: parseFloat(it.amount),
+      currency: it.currency || 'NGN',
     }))
 
     setSubmitting(true)
     try {
       if (mode === 'single') {
         if (!selected) { setError('Please search and select a student.'); setSubmitting(false); return }
-        await createFinanceRecord({ studentId: selected._id, items: cleanItems, currency }, adminToken)
+        await createFinanceRecord({ studentId: selected._id, items: cleanItems }, adminToken)
         setSuccess('single')
       } else {
-        const payload = { items: cleanItems, target: mode, currency }
+        const payload = { items: cleanItems, target: mode }
 
         if (mode === 'department') {
           if (!targetDeptId) { setError('Please select a department.'); setSubmitting(false); return }
@@ -299,6 +322,7 @@ export default function CreateRecord() {
           if (!targetFacId) { setError('Please select a faculty.'); setSubmitting(false); return }
           const fac = faculties.find(f => f._id === targetFacId)
           payload.faculty = fac?.name || ''
+          if (targetLevel) payload.level = Number(targetLevel)
         }
 
         const res = await createFinanceBulk(payload, adminToken)
@@ -339,11 +363,14 @@ export default function CreateRecord() {
               <div className="mt-3 space-y-1">
                 <p className="text-slate-400 text-sm">
                   <span className="text-emerald-400 font-bold">{success.created}</span> records created
+                  {success.updated > 0 && (
+                    <span className="text-slate-500"> · <span className="text-amber-400 font-bold">{success.updated}</span> updated</span>
+                  )}
                   {success.skipped > 0 && (
-                    <span className="text-slate-500"> · <span className="text-amber-400 font-bold">{success.skipped}</span> skipped (already existed)</span>
+                    <span className="text-slate-500"> · <span className="text-slate-400 font-bold">{success.skipped}</span> skipped</span>
                   )}
                 </p>
-                <p className="text-slate-600 text-xs">out of {success.total} students matched</p>
+                <p className="text-slate-600 text-xs">out of {success.total} students processed</p>
               </div>
             )}
           </div>
@@ -554,6 +581,19 @@ export default function CreateRecord() {
                 ) : null
               })()}
 
+              {/* Level filter for faculty */}
+              {targetFacId && (
+                <SelectField value={targetLevel} onChange={setTargetLevel}>
+                  <option value="">All levels</option>
+                  <option value="100">100 Level</option>
+                  <option value="200">200 Level</option>
+                  <option value="300">300 Level</option>
+                  <option value="400">400 Level</option>
+                  <option value="500">500 Level</option>
+                  <option value="600">600 Level</option>
+                </SelectField>
+              )}
+
               <PreviewButton
                 onClick={handlePreview}
                 disabled={previewing || !targetFacId}
@@ -572,7 +612,7 @@ export default function CreateRecord() {
                   <p className="text-amber-400 font-bold text-sm">All Students</p>
                   <p className="text-slate-500 text-xs mt-0.5">
                     This fee record will be created for every registered student.
-                    Records that already exist for the selected session/semester will be skipped.
+                    Existing records will be updated with new fee items.
                   </p>
                 </div>
               </div>
@@ -600,26 +640,18 @@ export default function CreateRecord() {
               <div>
                 <p className="text-white font-bold text-sm">{activeSession.session}</p>
                 <p className="text-slate-400 text-xs mt-0.5">
-                  {activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester · Controlled by General Admin
+                  {activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.phase} Semester · Controlled by General Admin
                 </p>
               </div>
             </div>
           )}
         </div>
 
-        {/* ── STEP 3.5: Currency ── */}
-        <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6 space-y-4">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">3.5. Currency</h2>
-          <SelectField value={currency} onChange={setCurrency}>
-            {CURRENCIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-          </SelectField>
-        </div>
-
         {/* ── STEP 4: Fee items ── */}
         <div className="bg-slate-900 border border-slate-800/60 rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">4. Fee Items</h2>
-            <span className="text-xs text-slate-600">Type or pick from suggestions</span>
+            <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest">3. Fee Items</h2>
+            <span className="text-xs text-slate-600">Type or pick from suggestions · Select currency per item</span>
           </div>
 
           <div className="space-y-2.5">
@@ -631,7 +663,7 @@ export default function CreateRecord() {
                 onChange={updateItem}
                 onRemove={removeItem}
                 canRemove={items.length > 1}
-                currencySymbol={CURRENCIES.find(c => c.value === currency)?.symbol || '₦'}
+                currencies={CURRENCIES}
               />
             ))}
           </div>
@@ -644,10 +676,18 @@ export default function CreateRecord() {
             Add fee item
           </button>
 
-          {totalAmount > 0 && (
-            <div className="flex items-center justify-between pt-3 border-t border-slate-800">
+          {Object.keys(totalsByCurrency).length > 0 && (
+            <div className="space-y-2 pt-3 border-t border-slate-800">
               <span className="text-slate-400 text-sm font-medium">Total per student</span>
-              <span className="text-white font-black text-lg">{CURRENCIES.find(c => c.value === currency)?.symbol || '₦'}{totalAmount.toLocaleString()}</span>
+              {Object.entries(totalsByCurrency).map(([curr, amount]) => {
+                const symbol = CURRENCIES.find(c => c.value === curr)?.symbol || '₦'
+                return (
+                  <div key={curr} className="flex items-center justify-between">
+                    <span className="text-slate-500 text-xs">{curr === 'NGN' ? 'Naira' : 'CFA'}</span>
+                    <span className="text-white font-black text-base">{symbol}{amount.toLocaleString()}</span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

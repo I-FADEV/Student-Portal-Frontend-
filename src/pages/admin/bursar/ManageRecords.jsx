@@ -5,6 +5,8 @@ import {
   getAllFinanceRecords,
   recordFinancePayment,
   addItemToFinanceRecord,
+  getActiveSession,
+  getAllSessions,
 } from '../../../services/api'
 import {
   TrendingUp, Plus, FileText, Wallet,
@@ -20,8 +22,7 @@ const NAV_ITEMS = [
   { label: 'Change Password', path: '/admin/bursar/change-password', icon: Wallet },
 ]
 
-const SESSIONS  = ['2025/2026', '2024/2025', '2023/2024', '2022/2023']
-const SEMESTERS = ['First', 'Second']
+const SEMESTERS = ['First', 'Second', 'Summer']
 const STATUSES  = ['Paid', 'Partial', 'Unpaid']
 
 const PRESET_LABELS = [
@@ -47,9 +48,6 @@ function itemStatusCls(status) {
 
 // ─── Payment Modal ────────────────────────────────────────────────────────────
 function PaymentModal({ record, onClose, onSuccess, adminToken }) {
-  const currency = record.currency || 'NGN'
-  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
-
   const [payments,   setPayments]   = useState(
     record.items.map(it => ({
       itemLabel:  it.label,
@@ -57,10 +55,13 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
       max:        it.amount - it.paidAmount,
       paidAmount: it.paidAmount,
       total:      it.amount,
+      currency:   it.currency || 'NGN',
     }))
   )
   const [submitting, setSubmitting] = useState(false)
   const [error,      setError]      = useState(null)
+
+  const getCurrencySymbol = (currency) => currency === 'XAF' ? 'FCFA' : '₦'
 
   const update = (i, val) => setPayments(prev => prev.map((p, idx) => idx === i ? { ...p, amountPaid: val } : p))
 
@@ -70,7 +71,7 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
     if (active.length === 0) return setError('Enter at least one payment amount.')
     for (const p of active) {
       if (parseFloat(p.amountPaid) > p.max)
-        return setError(`Payment for "${p.itemLabel}" exceeds the remaining balance of ${currencySymbol}${p.max.toLocaleString()}.`)
+        return setError(`Payment for "${p.itemLabel}" exceeds the remaining balance of ${getCurrencySymbol(p.currency)}${p.max.toLocaleString()}.`)
     }
     setSubmitting(true)
     try {
@@ -101,6 +102,7 @@ function PaymentModal({ record, onClose, onSuccess, adminToken }) {
         <div className="px-6 py-4 space-y-4 max-h-72 overflow-y-auto">
           {payments.map((p, i) => {
             const remaining = p.max
+            const currencySymbol = getCurrencySymbol(p.currency)
             return (
               <div key={p.itemLabel} className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -167,6 +169,7 @@ function AddItemModal({ record, onClose, onSuccess, adminToken }) {
 
   const [label,      setLabel]      = useState('')
   const [amount,     setAmount]     = useState('')
+  const [itemCurrency, setItemCurrency] = useState(currency)
   const [submitting, setSubmitting] = useState(false)
   const [error,      setError]      = useState(null)
 
@@ -183,6 +186,7 @@ function AddItemModal({ record, onClose, onSuccess, adminToken }) {
       await addItemToFinanceRecord(record._id, {
         label:  cleanLabel,
         amount: parseFloat(amount),
+        currency: itemCurrency,
       }, adminToken)
       onSuccess()
     } catch (err) {
@@ -226,7 +230,14 @@ function AddItemModal({ record, onClose, onSuccess, adminToken }) {
           <div>
             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Amount</label>
             <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl focus-within:border-amber-500/50 transition-colors">
-              <span className="text-slate-500 text-sm">{currencySymbol}</span>
+              <select
+                value={itemCurrency}
+                onChange={e => setItemCurrency(e.target.value)}
+                className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-1 text-xs text-white outline-none focus:border-amber-500/50 transition-colors"
+              >
+                <option value="NGN">₦</option>
+                <option value="XAF">FCFA</option>
+              </select>
               <input
                 type="number"
                 value={amount}
@@ -270,6 +281,19 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
   const meta = statusMeta(record.paymentStatus)
   const Icon = meta.icon
 
+  // Calculate totals by currency from items
+  const totalsByCurrency = record.items.reduce((acc, item) => {
+    const curr = item.currency || currency
+    const amount = item.amount || 0
+    const paid = item.paidAmount || 0
+    if (!acc[curr]) acc[curr] = { total: 0, paid: 0 }
+    acc[curr].total += amount
+    acc[curr].paid += paid
+    return acc
+  }, {})
+
+  const hasMultipleCurrencies = Object.keys(totalsByCurrency).length > 1
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-end p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
       <div
@@ -294,18 +318,49 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
         </div>
 
         {/* Totals */}
-        <div className="grid grid-cols-3 divide-x divide-slate-800 border-b border-slate-800 flex-shrink-0">
-          {[
-            ['Total',       `${currencySymbol}${Number(record.totalAmount).toLocaleString()}`,        'text-white'],
-            ['Paid',        `${currencySymbol}${Number(record.totalPaid).toLocaleString()}`,          'text-emerald-400'],
-            ['Outstanding', `${currencySymbol}${Number(record.outstandingBalance).toLocaleString()}`, record.outstandingBalance > 0 ? 'text-red-400' : 'text-emerald-400'],
-          ].map(([label, value, cls]) => (
-            <div key={label} className="px-4 py-3 text-center">
-              <p className={`text-base font-black ${cls}`}>{value}</p>
-              <p className="text-slate-600 text-[10px] mt-0.5">{label}</p>
-            </div>
-          ))}
-        </div>
+        {!hasMultipleCurrencies ? (
+          <div className="grid grid-cols-3 divide-x divide-slate-800 border-b border-slate-800 flex-shrink-0">
+            {[
+              ['Total',       `${currencySymbol}${Number(record.totalAmount).toLocaleString()}`,        'text-white'],
+              ['Paid',        `${currencySymbol}${Number(record.totalPaid).toLocaleString()}`,          'text-emerald-400'],
+              ['Outstanding', `${currencySymbol}${Number(record.outstandingBalance).toLocaleString()}`, record.outstandingBalance > 0 ? 'text-red-400' : 'text-emerald-400'],
+            ].map(([label, value, cls]) => (
+              <div key={label} className="px-4 py-3 text-center">
+                <p className={`text-base font-black ${cls}`}>{value}</p>
+                <p className="text-slate-600 text-[10px] mt-0.5">{label}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="border-b border-slate-800 flex-shrink-0 p-4 space-y-3">
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Totals by Currency</p>
+            {Object.entries(totalsByCurrency).map(([curr, data]) => {
+              const symbol = curr === 'XAF' ? 'FCFA' : '₦'
+              const outstanding = data.total - data.paid
+              return (
+                <div key={curr} className="bg-slate-800/50 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white text-sm font-semibold">{curr === 'XAF' ? 'CFA' : 'Naira'}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <p className="text-white text-xs font-bold">{symbol}{data.total.toLocaleString()}</p>
+                      <p className="text-slate-600 text-[9px]">Total</p>
+                    </div>
+                    <div>
+                      <p className="text-emerald-400 text-xs font-bold">{symbol}{data.paid.toLocaleString()}</p>
+                      <p className="text-slate-600 text-[9px]">Paid</p>
+                    </div>
+                    <div>
+                      <p className={`${outstanding > 0 ? 'text-red-400' : 'text-emerald-400'} text-xs font-bold`}>{symbol}{outstanding.toLocaleString()}</p>
+                      <p className="text-slate-600 text-[9px]">Outstanding</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* Carried over */}
         {record.carriedOverBalance > 0 && (
@@ -321,14 +376,19 @@ function DetailPanel({ record, onClose, onPay, onAddItem }) {
           <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-3">Fee Breakdown</p>
           {record.items.map((item, i) => {
             const pct = item.amount > 0 ? Math.round((item.paidAmount / item.amount) * 100) : 0
+            const itemCurrency = item.currency || record.currency || 'NGN'
+            const itemCurrencySymbol = itemCurrency === 'XAF' ? 'FCFA' : '₦'
             return (
               <div key={i} className="p-3 bg-slate-800/50 border border-slate-700/40 rounded-xl space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-white text-sm font-semibold">{item.label}</p>
-                  <span className={`text-xs font-bold ${itemStatusCls(item.status)}`}>{item.status}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500 bg-slate-700/50 px-1.5 py-0.5 rounded">{itemCurrency === 'XAF' ? 'CFA' : 'NGN'}</span>
+                    <span className={`text-xs font-bold ${itemStatusCls(item.status)}`}>{item.status}</span>
+                  </div>
                 </div>
                 <div className="flex items-center justify-between text-xs text-slate-400">
-                  <span>{currencySymbol}{Number(item.paidAmount).toLocaleString()} paid of {currencySymbol}{Number(item.amount).toLocaleString()}</span>
+                  <span>{itemCurrencySymbol}{Number(item.paidAmount).toLocaleString()} paid of {itemCurrencySymbol}{Number(item.amount).toLocaleString()}</span>
                   <span>{pct}%</span>
                 </div>
                 <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
@@ -377,6 +437,10 @@ export default function ManageRecords() {
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(null)
 
+  // Sessions
+  const [sessions, setSessions] = useState([])
+  const [sessionsLoading, setSessionsLoading] = useState(true)
+
   // Filters
   const [search,   setSearch]   = useState('')
   const [session,  setSession]  = useState('')
@@ -402,6 +466,28 @@ export default function ManageRecords() {
   }, [adminToken, session, semester, status])
 
   useEffect(() => { fetchRecords() }, [fetchRecords])
+
+  // Fetch sessions on load
+  useEffect(() => {
+    const fetchSessions = async () => {
+      setSessionsLoading(true)
+      try {
+        // Fetch active session to set as default
+        const activeRes = await getActiveSession(adminToken)
+        const activeSession = activeRes?.data?.session
+        if (activeSession) setSession(activeSession)
+
+        // Fetch all sessions for dropdown
+        const allRes = await getAllSessions(adminToken)
+        setSessions(allRes?.data || [])
+      } catch (err) {
+        console.error('Failed to fetch sessions:', err)
+      } finally {
+        setSessionsLoading(false)
+      }
+    }
+    fetchSessions()
+  }, [adminToken])
 
   // Client-side name/matric search
   const filtered = records.filter(r => {
@@ -479,10 +565,10 @@ export default function ManageRecords() {
           </div>
 
           {[
-            { value: session,  onChange: setSession,  options: SESSIONS,  placeholder: 'All Sessions' },
+            { value: session,  onChange: setSession,  options: sessions,  placeholder: sessionsLoading ? 'Loading sessions...' : 'All Sessions', loading: sessionsLoading, isSession: true },
             { value: semester, onChange: setSemester, options: SEMESTERS, placeholder: 'All Semesters' },
             { value: status,   onChange: setStatus,   options: STATUSES,  placeholder: 'All Statuses' },
-          ].map(({ value, onChange, options, placeholder }) => (
+          ].map(({ value, onChange, options, placeholder, loading, isSession }) => (
             <div key={placeholder} className="relative">
               <select
                 value={value}
@@ -490,7 +576,10 @@ export default function ManageRecords() {
                 className="appearance-none bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 pr-8 text-sm text-white focus:outline-none focus:border-amber-500/50 transition-colors"
               >
                 <option value="">{placeholder}</option>
-                {options.map(o => <option key={o} value={o}>{o}</option>)}
+                {isSession
+                  ? options.map(o => <option key={o._id || o.session} value={o.session}>{o.session}</option>)
+                  : options.map(o => <option key={o} value={o}>{o}</option>)
+                }
               </select>
               <ChevronDown size={13} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
             </div>
@@ -528,8 +617,33 @@ export default function ManageRecords() {
                 {filtered.map(rec => {
                   const meta = statusMeta(rec.paymentStatus)
                   const Icon = meta.icon
-                  const currency = rec.currency || 'NGN'
-                  const currencySymbol = currency === 'XAF' ? 'FCFA' : '₦'
+
+                  // Check if record has mixed currencies
+                  const currencies = new Set(rec.items?.map(item => item.currency || 'NGN'))
+                  const hasMixedCurrencies = currencies.size > 1
+
+                  // Calculate totals by currency
+                  const totalsByCurrency = {}
+                  const paidByCurrency = {}
+                  rec.items?.forEach(item => {
+                    const curr = item.currency || 'NGN'
+                    totalsByCurrency[curr] = (totalsByCurrency[curr] || 0) + item.amount
+                    paidByCurrency[curr] = (paidByCurrency[curr] || 0) + item.paidAmount
+                  })
+
+                  const formatCurrencyDisplay = (amounts) => {
+                    if (hasMixedCurrencies) {
+                      return Object.entries(amounts).map(([curr, amt]) => {
+                        const symbol = curr === 'XAF' ? 'FCFA' : '₦'
+                        return `${symbol}${Number(amt).toLocaleString()}`
+                      }).join(' + ')
+                    }
+                    const curr = rec.currency || 'NGN'
+                    const symbol = curr === 'XAF' ? 'FCFA' : '₦'
+                    const amt = amounts[curr] || 0
+                    return `${symbol}${Number(amt).toLocaleString()}`
+                  }
+
                   return (
                     <div
                       key={rec._id}
@@ -541,8 +655,8 @@ export default function ManageRecords() {
                         <p className="text-slate-500 text-xs">{rec.student?.matricNumber}</p>
                       </div>
                       <p className="text-slate-300 text-sm">{rec.session} <span className="text-slate-600">·</span> {rec.semester}</p>
-                      <p className="text-white text-sm font-bold">{currencySymbol}{Number(rec.totalAmount).toLocaleString()}</p>
-                      <p className="text-emerald-400 text-sm font-semibold">{currencySymbol}{Number(rec.totalPaid).toLocaleString()}</p>
+                      <p className="text-white text-sm font-bold">{formatCurrencyDisplay(totalsByCurrency)}</p>
+                      <p className="text-emerald-400 text-sm font-semibold">{formatCurrencyDisplay(paidByCurrency)}</p>
                       <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border w-fit ${meta.cls}`}>
                         <Icon size={10} />{meta.label}
                       </span>

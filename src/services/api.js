@@ -356,7 +356,7 @@ export async function getAllFinanceRecords({ session, semester, status } = {}, t
   if (session)  params.append('session',  session)
   if (semester) params.append('semester', semester)
   if (status)   params.append('status',   status)
- 
+
   const response = await fetch(`${API_BASE_URL}/finance/adminView?${params.toString()}`, {
     headers: authHeaders(token),
   })
@@ -677,11 +677,11 @@ export async function deleteTimetableEntry(id, token) {
  
 // ── RESULTS ──────────────────────────────────────────────────────────────────
  
-// GET /results/course?courseCode=&session=&semester=
-// Returns all students enrolled in that course + their existing results if any
+// GET /results/students-for-course?courseCode=&session=&semester=
+// Returns all students enrolled in that course based on course targets from TimetableCourse
 export async function getResultsByCourse({ courseCode, session, semester }, token) {
   const params = new URLSearchParams({ courseCode, session, semester })
-  const response = await fetch(`${API_BASE_URL}/results/admin-view?${params}`, {
+  const response = await fetch(`${API_BASE_URL}/results/students-for-course?${params}`, {
     headers: authHeaders(token),
   })
   const data = await response.json()
@@ -699,6 +699,19 @@ export async function saveResultsBulk(results, token) {
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to save results'))
+  return data
+}
+
+// POST /results/upload-bulk
+// Body: multipart/form-data with file field (Excel file upload)
+export async function uploadResultsBulk(formData, token) {
+  const response = await fetch(`${API_BASE_URL}/results/upload-bulk`, {
+    method:  'POST',
+    headers: authHeaders(token),
+    body:    formData,
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to upload results'))
   return data
 }
  
@@ -782,7 +795,7 @@ export async function searchStudents(query, token) {
 // ========== SESSION CONTROL (GA only) ==========
 
 export async function getActiveSession(token) {
-  const response = await fetch(`${API_BASE_URL}/session/active`, {
+  const response = await fetch(`${API_BASE_URL}/session/academic/active`, {
     headers: authHeaders(token),
   })
   const data = await response.json()
@@ -803,7 +816,7 @@ export async function createSession({ session, startNow, startDate }, token) {
 
 export async function endCurrentPhase(token) {
   const response = await fetch(`${API_BASE_URL}/session/end-current-phase`, {
-    method: 'PATCH',
+    method: 'POST',
     headers: authHeaders(token),
   })
   const data = await response.json()
@@ -812,10 +825,10 @@ export async function endCurrentPhase(token) {
 }
 
 export async function startNextPhase({ phase, startNow, startDate }, token) {
-  const response = await fetch(`${API_BASE_URL}/session/start-${phase}`, {
-    method: 'PATCH',
+  const response = await fetch(`${API_BASE_URL}/session/start-next-phase`, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ startNow, startDate }),
+    body: JSON.stringify({ phase, startNow, startDate }),
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, `Failed to start ${phase}`))
@@ -828,6 +841,15 @@ export async function getSessionHistory(token) {
   })
   const data = await response.json()
   if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch session history'))
+  return data
+}
+
+export async function getAllSessions(token) {
+  const response = await fetch(`${API_BASE_URL}/session`, {
+    headers: authHeaders(token),
+  })
+  const data = await response.json()
+  if (!response.ok) throw new Error(getErrorMessage(data, 'Failed to fetch sessions'))
   return data
 }
 

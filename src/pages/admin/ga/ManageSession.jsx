@@ -10,26 +10,28 @@ import {
   getSessionHistory,
 } from '../../../services/api'
 import {
+  LayoutDashboard,
   CalendarClock,
-  Plus,
+  PlusCircle,
+  Users,
+  ScrollText,
+  KeyRound,
   CheckCircle2,
   Clock,
   AlertCircle,
   Loader2,
-  ChevronRight,
   Calendar,
   Play,
   Pause,
-  SkipForward,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
-  { label: 'Dashboard',       path: '/admin/ga',              icon: CalendarClock },
+  { label: 'Dashboard',       path: '/admin/ga',              icon: LayoutDashboard },
   { label: 'Session Control', path: '/admin/ga/session',      icon: CalendarClock },
-  { label: 'Create Admin',    path: '/admin/ga/create',       icon: Plus },
-  { label: 'Manage Admins',   path: '/admin/ga/admins',       icon: Plus },
-  { label: 'Activity Logs',   path: '/admin/ga/logs',         icon: CalendarClock },
-  { label: 'Change Password', path: '/admin/ga/password',     icon: CalendarClock },
+  { label: 'Create Admin',    path: '/admin/ga/create',       icon: PlusCircle },
+  { label: 'Manage Admins',   path: '/admin/ga/admins',       icon: Users },
+  { label: 'Activity Logs',   path: '/admin/ga/logs',         icon: ScrollText },
+  { label: 'Change Password', path: '/admin/ga/password',     icon: KeyRound },
 ]
 
 export default function ManageSession() {
@@ -67,7 +69,12 @@ export default function ManageSession() {
         getActiveSession(adminToken),
         getSessionHistory(adminToken),
       ])
-      setActiveSession(activeRes.data || null)
+      const sessionData = activeRes.data || null
+      // If backend doesn't return phase, default to 'first' for new sessions
+      if (sessionData && !sessionData.phase && sessionData.status === 'active') {
+        sessionData.phase = 'first'
+      }
+      setActiveSession(sessionData)
       setHistory(Array.isArray(historyRes.data) ? historyRes.data : [])
     } catch (err) {
       setError(err.message)

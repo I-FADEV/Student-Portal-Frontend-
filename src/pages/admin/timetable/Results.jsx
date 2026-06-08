@@ -4,7 +4,7 @@ import AdminLayout from '../../../components/shared/AdminLayout'
 import { TIMETABLE_NAV } from './Dashboard'
 import {
   getTimetableCourses, getResultsByCourse,
-  saveResultsBulk, getResultsByStudent, updateResult,
+  saveResultsBulk, uploadResultsBulk, getResultsByStudent, updateResult,
   getActiveSession,
 } from '../../../services/api'
 import {
@@ -171,23 +171,18 @@ export default function Results() {
   }
 
   const handleExcelSave = async () => {
-    if (!xlRows.length || !selectedCode) return
+    if (!xlFile || !selectedCode) return
     setSaving(true)
     setSaveErr(null)
     setSaveMsg(null)
     try {
-      const payload = xlRows.map(r => ({
-        courseCode: selectedCode,
-        session, semester,
-        studentName:  r.studentName,
-        matricNumber: r.matricNumber,
-        test:  r.test,
-        exam:  r.exam,
-        total: r.total,
-        grade: r.grade,
-      }))
-      await saveResultsBulk(payload, adminToken)
-      setSaveMsg(`${payload.length} result${payload.length !== 1 ? 's' : ''} saved successfully.`)
+      const formData = new FormData()
+      formData.append('file', xlFile)
+      formData.append('courseCode', selectedCode)
+      formData.append('session', session)
+      formData.append('semester', semester)
+      await uploadResultsBulk(formData, adminToken)
+      setSaveMsg('Excel file uploaded successfully.')
       setXlFile(null)
       setXlRows([])
       loadStudents()
@@ -239,13 +234,17 @@ export default function Results() {
   }
 
   // ── By Student search ──────────────────────────────────────────────────────
+  const [studentInfo, setStudentInfo] = useState(null)
+
   const searchStudent = async () => {
     if (!studentQuery || !session || !semester) return
     setLoadingSR(true)
     setSrError(null)
+    setStudentInfo(null)
     try {
       const data = await getResultsByStudent({ query: studentQuery, session, semester }, adminToken)
       setStudentResults(Array.isArray(data) ? data : data?.data || [])
+      setStudentInfo(data?.student || null)
     } catch (err) {
       setSrError(err.message)
     } finally {
@@ -540,85 +539,89 @@ export default function Results() {
               </div>
             )}
 
-            {!loadingSR && studentResults.length > 0 && (
+            {!loadingSR && (studentResults.length > 0 || studentInfo) && (
               <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-800">
-                  <p className="text-white font-bold">{studentResults[0]?.studentName}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">{studentResults[0]?.matricNumber} · {session} {semester} Semester</p>
+                  <p className="text-white font-bold">{studentResults[0]?.studentName || studentInfo?.name}</p>
+                  <p className="text-slate-500 text-xs mt-0.5">{studentResults[0]?.matricNumber || studentInfo?.matricNumber} · {session} {semester} Semester</p>
                 </div>
-                <table className="w-full text-xs">
-                  <thead className="bg-slate-900/50">
-                    <tr>
-                      {['Course', 'Test', 'Exam', 'Total', 'Grade', ''].map(h => (
-                        <th key={h} className="px-4 py-3 text-left font-bold text-slate-500 border-b border-slate-800">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {studentResults.map((r) => (
-                      <tr key={r._id} className="border-b border-slate-800/60 hover:bg-slate-800/30">
-                        {editingId === r._id ? (
-                          <>
-                            <td className="px-4 py-2 text-white font-mono font-bold">{r.courseCode}</td>
-                            <td className="px-2 py-1.5">
-                              <input type="number" value={editRow.test}
-                                onChange={e => {
-                                  const test = Number(e.target.value)
-                                  const total = test + Number(editRow.exam)
-                                  setEditRow(p => ({...p, test, total, grade: calcGrade(total)}))
-                                }}
-                                className="w-14 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-white"
-                              />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <input type="number" value={editRow.exam}
-                                onChange={e => {
-                                  const exam = Number(e.target.value)
-                                  const total = Number(editRow.test) + exam
-                                  setEditRow(p => ({...p, exam, total, grade: calcGrade(total)}))
-                                }}
-                                className="w-14 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-white"
-                              />
-                            </td>
-                            <td className="px-4 py-2 font-semibold text-slate-200">{editRow.total}</td>
-                            <td className="px-4 py-2">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border ${GRADE_COLORS[editRow.grade]}`}>
-                                {editRow.grade}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2">
-                              <div className="flex gap-1">
-                                <button onClick={handleEditResult} disabled={editSaving}
-                                  className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold"
-                                >{editSaving ? '…' : 'Save'}</button>
-                                <button onClick={() => setEditingId(null)}
-                                  className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-[10px] font-bold"
-                                >Cancel</button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-3 text-white font-mono font-bold">{r.courseCode}</td>
-                            <td className="px-4 py-3 text-slate-300">{r.test}</td>
-                            <td className="px-4 py-3 text-slate-300">{r.exam}</td>
-                            <td className="px-4 py-3 font-semibold text-slate-200">{r.total}</td>
-                            <td className="px-4 py-3">
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border ${GRADE_COLORS[r.grade] || ''}`}>
-                                {r.grade}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3">
-                              <button onClick={() => startEditResult(r)}
-                                className="text-slate-500 hover:text-blue-400 transition-colors"
-                              ><Users size={13}/></button>
-                            </td>
-                          </>
-                        )}
+                {studentResults.length > 0 ? (
+                  <table className="w-full text-xs">
+                    <thead className="bg-slate-900/50">
+                      <tr>
+                        {['Course', 'Test', 'Exam', 'Total', 'Grade', ''].map(h => (
+                          <th key={h} className="px-4 py-3 text-left font-bold text-slate-500 border-b border-slate-800">{h}</th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {studentResults.map((r) => (
+                        <tr key={r._id} className="border-b border-slate-800/60 hover:bg-slate-800/30">
+                          {editingId === r._id ? (
+                            <>
+                              <td className="px-4 py-2 text-white font-mono font-bold">{r.courseCode}</td>
+                              <td className="px-2 py-1.5">
+                                <input type="number" value={editRow.test}
+                                  onChange={e => {
+                                    const test = Number(e.target.value)
+                                    const total = test + Number(editRow.exam)
+                                    setEditRow(p => ({...p, test, total, grade: calcGrade(total)}))
+                                  }}
+                                  className="w-14 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-white"
+                                />
+                              </td>
+                              <td className="px-2 py-1.5">
+                                <input type="number" value={editRow.exam}
+                                  onChange={e => {
+                                    const exam = Number(e.target.value)
+                                    const total = Number(editRow.test) + exam
+                                    setEditRow(p => ({...p, exam, total, grade: calcGrade(total)}))
+                                  }}
+                                  className="w-14 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded text-white"
+                                />
+                              </td>
+                              <td className="px-4 py-2 font-semibold text-slate-200">{editRow.total}</td>
+                              <td className="px-4 py-2">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border ${GRADE_COLORS[editRow.grade]}`}>
+                                  {editRow.grade}
+                                </span>
+                              </td>
+                              <td className="px-4 py-2">
+                                <div className="flex gap-1">
+                                  <button onClick={handleEditResult} disabled={editSaving}
+                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px] font-bold"
+                                  >{editSaving ? '…' : 'Save'}</button>
+                                  <button onClick={() => setEditingId(null)}
+                                    className="px-3 py-1.5 rounded-lg bg-slate-700 text-slate-300 text-[10px] font-bold"
+                                  >Cancel</button>
+                                </div>
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="px-4 py-3 text-white font-mono font-bold">{r.courseCode}</td>
+                              <td className="px-4 py-3 text-slate-300">{r.test}</td>
+                              <td className="px-4 py-3 text-slate-300">{r.exam}</td>
+                              <td className="px-4 py-3 font-semibold text-slate-200">{r.total}</td>
+                              <td className="px-4 py-3">
+                                <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black border ${GRADE_COLORS[r.grade] || ''}`}>
+                                  {r.grade}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <button onClick={() => startEditResult(r)}
+                                  className="text-slate-500 hover:text-blue-400 transition-colors"
+                                ><Users size={13}/></button>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="py-10 text-center text-slate-600 text-sm">No results found for this student in this session/semester.</div>
+                )}
               </div>
             )}
 

@@ -135,7 +135,7 @@ export default function GADashboard() {
                   </p>
                   <p className="text-slate-500 text-xs mt-0.5">
                     {activeSession
-                      ? `${activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.semester} Semester · Started ${new Date(activeSession.startedAt).toLocaleDateString()}`
+                      ? `${activeSession.phase === 'summer' ? 'Summer (Remedial)' : activeSession.phase} Semester · Started ${new Date(activeSession.startedAt).toLocaleDateString()}`
                       : 'Create a session to begin the academic year'
                     }
                   </p>

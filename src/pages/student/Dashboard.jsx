@@ -115,20 +115,20 @@ export default function Dashboard() {
           setFinance(financeData)
         }
       }
-      if (c.status === 'fulfilled') setIdCard(c.value)
+      if (c.status === 'fulfilled') setIdCard(c.value?.data || c.value)
       setLoading(false)
     }
     fetchAll()
   }, [token])
 
   // Derive status — if no idCard record at all, treat as unsubmitted
+  // If fee is not paid, show as unpaid regardless of submission status
+  const feePaid = idCard?.feePaid === true || idCard?.feePaid === 'true' || idCard?.feePaid === 'yes'
   const rawStatus = idCard?.status || 'unsubmitted'
   const idMeta    = idCardStatusMeta(rawStatus)
   const finMeta   = financeStatusMeta(finance?.status)
   const IDIcon    = idMeta.icon
 
-  // Show lock icon if fee not paid and not yet submitted
-  const feePaid       = idCard?.feePaid === true
   const isUnsubmitted = rawStatus === 'unsubmitted'
 
   const quickLinks = [
@@ -185,15 +185,20 @@ export default function Dashboard() {
               ID Card Status
             </div>
             {!loading && (
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${idMeta.color}`}>
-                <IDIcon size={11} />
-                {idMeta.label}
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${!feePaid ? 'text-red-600 bg-red-50 border-red-200' : idMeta.color}`}>
+                {!feePaid ? <Lock size={11} /> : <IDIcon size={11} />}
+                {!feePaid ? 'Unpaid' : idMeta.label}
               </span>
             )}
           </div>
 
           {loading ? (
             <Skeleton className="h-5 w-3/4" />
+          ) : !feePaid ? (
+            <p className="text-slate-500 text-sm flex items-center gap-1.5">
+              <Lock size={13} className="text-slate-400" />
+              Pay ID card fee at Bursar's office to apply.
+            </p>
           ) : rawStatus === 'pending' ? (
             <div className="space-y-1">
               <p className="text-slate-700 text-sm">
@@ -213,27 +218,23 @@ export default function Dashboard() {
               <PackageCheck size={14} className="text-blue-500" />
               Your ID card has been collected.
             </p>
+          ) : rawStatus === 'rejected' ? (
+            <p className="text-slate-700 text-sm flex items-center gap-1.5">
+              <AlertCircle size={14} className="text-red-500" />
+              Your ID card request was rejected. You may resubmit.
+            </p>
           ) : (
-            // Unsubmitted
-            <div className="space-y-1.5">
-              {!feePaid ? (
-                <p className="text-slate-500 text-sm flex items-center gap-1.5">
-                  <Lock size={13} className="text-slate-400" />
-                  Pay ID card fee at Bursar's office to apply.
-                </p>
-              ) : (
-                <p className="text-slate-500 text-sm flex items-center gap-1.5">
-                  <AlertCircle size={13} />
-                  No submission yet.{' '}
-                  <button
-                    onClick={() => navigate('/student/idcard')}
-                    className="text-blue-600 underline ml-0.5"
-                  >
-                    Apply now
-                  </button>
-                </p>
-              )}
-            </div>
+            // Unsubmitted but fee paid
+            <p className="text-slate-500 text-sm flex items-center gap-1.5">
+              <AlertCircle size={13} />
+              No submission yet.{' '}
+              <button
+                onClick={() => navigate('/student/idcard')}
+                className="text-blue-600 underline ml-0.5"
+              >
+                Apply now
+              </button>
+            </p>
           )}
         </div>
 

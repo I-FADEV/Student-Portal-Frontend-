@@ -3,12 +3,14 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAdminAuth } from "../../context/AdminAuthContext";
 import { adminLogin } from "../../services/api";
 import styles from "./AdminLogin.module.css";
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function AdminLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
   const { login } = useAdminAuth();
@@ -72,12 +74,34 @@ export default function AdminLogin() {
 
             <div className={styles.inputGroup}>
               <label>Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  style={{ width: '100%', boxSizing: 'border-box' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    zIndex: 1,
+                  }}
+                >
+                  {showPassword ? <EyeOff size={20} className="text-slate-400" /> : <Eye size={20} className="text-slate-400" />}
+                </button>
+              </div>
             </div>
 
             {error && <div className={styles.errorMsg}>{error}</div>}

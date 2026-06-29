@@ -8,6 +8,8 @@ import {
   Clock,
   TrendingDown,
   AlertCircle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 
 function Skeleton({ className = '' }) {
@@ -54,6 +56,7 @@ export default function Finance() {
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState(null)
   const [activeSession, setActiveSession] = useState(null)
+  const [expandedSessions, setExpandedSessions] = useState({})
 
   useEffect(() => {
     // Fetch active session
@@ -73,18 +76,21 @@ export default function Finance() {
   .finally(() => setLoading(false))
   }, [token])
 
-  // Aggregate totals across all records
-  const totals = records.reduce(
-    (acc, r) => ({
-      totalFees: acc.totalFees + Number(r.totalAmount || 0),
-    totalPaid: acc.totalPaid + Number(r.totalPaid   || 0),
-    balance:   acc.balance   + Number(r.outstandingBalance || 0),
-  }),
-  { totalFees: 0, totalPaid: 0, balance: 0 }
-  )
-
-  // Get currency from first record (assuming all records in same session use same currency)
-  const currency = records.length > 0 ? (records[0].currency || 'NGN') : 'NGN'
+  // Aggregate totals across all records by item currency (not record currency)
+  const totalsByCurrency = records.reduce((acc, r) => {
+    if (r.items && Array.isArray(r.items)) {
+      r.items.forEach(item => {
+        const currency = item.currency || 'NGN'
+        if (!acc[currency]) {
+          acc[currency] = { totalFees: 0, totalPaid: 0, balance: 0 }
+        }
+        acc[currency].totalFees += Number(item.amount || 0)
+        acc[currency].totalPaid += Number(item.paidAmount || 0)
+        acc[currency].balance += (Number(item.amount || 0) - Number(item.paidAmount || 0))
+      })
+    }
+    return acc
+  }, {})
 
   return (
     <div className="space-y-6">
@@ -135,26 +141,30 @@ export default function Finance() {
       {!loading && !error && records.length > 0 && (
         <div className="space-y-6">
 
-          {/* Summary stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard
-              label="Total Fees"
-              amount={totals.totalFees}
-              color="bg-slate-50 border-slate-200 text-slate-800"
-              currency={currency}
-            />
-            <StatCard
-              label="Total Paid"
-              amount={totals.totalPaid}
-              color="bg-emerald-50 border-emerald-200 text-emerald-800"
-              currency={currency}
-            />
-            <StatCard
-              label="Outstanding Balance"
-              amount={totals.balance}
-              color={totals.balance > 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}
-              currency={currency}
-            />
+          {/* Summary stat cards - by currency */}
+          <div className="space-y-4">
+            {Object.entries(totalsByCurrency).map(([currency, totals]) => (
+              <div key={currency} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <StatCard
+                  label={`Total Fees (${currency})`}
+                  amount={totals.totalFees}
+                  color="bg-slate-50 border-slate-200 text-slate-800"
+                  currency={currency}
+                />
+                <StatCard
+                  label={`Total Paid (${currency})`}
+                  amount={totals.totalPaid}
+                  color="bg-emerald-50 border-emerald-200 text-emerald-800"
+                  currency={currency}
+                />
+                <StatCard
+                  label={`Outstanding Balance (${currency})`}
+                  amount={totals.balance}
+                  color={totals.balance > 0 ? 'bg-red-50 border-red-200 text-red-800' : 'bg-emerald-50 border-emerald-200 text-emerald-800'}
+                  currency={currency}
+                />
+              </div>
+            ))}
           </div>
 
           {/* Per-session breakdown */}
@@ -171,6 +181,7 @@ export default function Finance() {
                 const pct     = fees > 0 ? Math.min(100, Math.round((paid / fees) * 100)) : 0
                 const recordCurrency = record.currency || 'NGN'
                 const currencySymbol = recordCurrency === 'XAF' ? 'FCFA' : '₦'
+                const isExpanded = expandedSessions[record._id || idx] || false
 
                 return (
                   <div key={record._id || idx} className="p-5">
@@ -184,7 +195,15 @@ export default function Finance() {
                           <p className="text-xs text-slate-400 mt-0.5">{record.semester} Semester</p>
                         )}
                       </div>
-                      <StatusChip status={record.status} />
+                      <div className="flex items-center gap-2">
+                        <StatusChip status={record.paymentStatus} />
+                        <button
+                          onClick={() => setExpandedSessions(prev => ({ ...prev, [record._id || idx]: !prev[record._id || idx] }))}
+                          className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                        >
+                          {isExpanded ? <ChevronUp size={16} className="text-slate-500" /> : <ChevronDown size={16} className="text-slate-500" />}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Progress bar */}
@@ -202,7 +221,7 @@ export default function Finance() {
                     </div>
 
                     {/* Amounts */}
-                    <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="grid grid-cols-3 gap-3 text-center mb-3">
                       <div className="bg-slate-50 rounded-xl p-3">
                         <p className="text-xs text-slate-400 mb-1">Total Fees</p>
                         <p className="text-sm font-bold text-slate-800">{currencySymbol}{fees.toLocaleString()}</p>
@@ -220,6 +239,41 @@ export default function Finance() {
                         </p>
                       </div>
                     </div>
+
+                    {/* Fee Items Breakdown */}
+                    {isExpanded && record.items && record.items.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-slate-100">
+                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Fee Breakdown</p>
+                        <div className="space-y-2">
+                          {record.items.map((item, itemIdx) => {
+                            const itemCurrency = item.currency || 'NGN'
+                            const itemSymbol = itemCurrency === 'XAF' ? 'FCFA' : '₦'
+                            const itemStatus = (item.status || '').toLowerCase()
+                            const isPaid = itemStatus === 'paid'
+
+                            return (
+                              <div key={item._id || itemIdx} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-slate-800">{item.label}</p>
+                                  <p className="text-xs text-slate-500 mt-0.5">{itemSymbol}{Number(item.amount || 0).toLocaleString()}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="text-right">
+                                    <p className="text-xs text-slate-500">Paid</p>
+                                    <p className="text-sm font-bold text-slate-700">{itemSymbol}{Number(item.paidAmount || 0).toLocaleString()}</p>
+                                  </div>
+                                  {isPaid ? (
+                                    <CheckCircle2 size={16} className="text-emerald-500" />
+                                  ) : (
+                                    <AlertTriangle size={16} className="text-amber-500" />
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )
               })}
